@@ -36,7 +36,6 @@ except Exception as e:
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
-    """Health check endpoint"""
     return jsonify({
         'success': True,
         'message': 'API AliExpress Dropshipping funcionando!',
@@ -48,15 +47,9 @@ def health_check():
 
 @app.route('/api/aliexpress/products', methods=['GET'])
 def get_products():
-    """Buscar produtos do AliExpress para dropshipping"""
     if not aliexpress:
-        return jsonify({
-            'success': False,
-            'error': 'API AliExpress não inicializada'
-        }), 500
-
+        return jsonify({'success': False, 'error': 'API AliExpress não inicializada'}), 500
     try:
-        # Parâmetros da requisição
         keywords = request.args.get('keywords', '')
         page = int(request.args.get('page', 1))
         page_size = int(request.args.get('page_size', 20))
@@ -64,13 +57,11 @@ def get_products():
         min_price = request.args.get('min_price')
         ship_to_country = request.args.get('ship_to_country', 'BR')
 
-        # Converter preços para formato correto (centavos)
         if max_price:
             max_price = int(float(max_price) * 100)
         if min_price:
             min_price = int(float(min_price) * 100)
 
-        # Buscar produtos
         response = aliexpress.get_products(
             keywords=keywords,
             page_no=page,
@@ -81,13 +72,12 @@ def get_products():
             sort=models.SortBy.SALE_PRICE_ASC
         )
 
-        # Converter produtos para formato JSON
         products = []
         for product in response.products:
             products.append({
                 'id': product.product_id,
                 'title': product.product_title,
-                'price': product.target_sale_price / 100,  # Converter de centavos
+                'price': product.target_sale_price / 100,
                 'original_price': product.target_original_price / 100 if hasattr(product, 'target_original_price') else None,
                 'image': product.product_main_image_url,
                 'url': product.promotion_link,
@@ -110,36 +100,22 @@ def get_products():
     except Exception as e:
         print(f"❌ Erro ao buscar produtos: {e}")
         traceback.print_exc()
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/aliexpress/products/details', methods=['GET'])
 def get_product_details():
-    """Buscar detalhes de produtos específicos"""
     if not aliexpress:
-        return jsonify({
-            'success': False,
-            'error': 'API AliExpress não inicializada'
-        }), 500
-
+        return jsonify({'success': False, 'error': 'API AliExpress não inicializada'}), 500
     try:
         product_ids = request.args.get('product_ids', '')
         if not product_ids:
-            return jsonify({
-                'success': False,
-                'error': 'IDs dos produtos não fornecidos'
-            }), 400
+            return jsonify({'success': False, 'error': 'IDs dos produtos não fornecidos'}), 400
 
-        # Converter para lista
         if isinstance(product_ids, str):
             product_ids = [product_ids]
 
-        # Buscar detalhes dos produtos
         products = aliexpress.get_products_details(product_ids)
 
-        # Converter para formato JSON
         result = []
         for product in products:
             result.append({
@@ -160,39 +136,24 @@ def get_product_details():
                 'specifications': getattr(product, 'product_specifications', {})
             })
 
-        return jsonify({
-            'success': True,
-            'products': result
-        })
+        return jsonify({'success': True, 'products': result})
 
     except Exception as e:
         print(f"❌ Erro ao buscar detalhes dos produtos: {e}")
         traceback.print_exc()
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/aliexpress/categories', methods=['GET'])
 def get_categories():
-    """Buscar categorias do AliExpress"""
     if not aliexpress:
-        return jsonify({
-            'success': False,
-            'error': 'API AliExpress não inicializada'
-        }), 500
-
+        return jsonify({'success': False, 'error': 'API AliExpress não inicializada'}), 500
     try:
         parent_id = request.args.get('parent_id')
-        
         if parent_id:
-            # Buscar subcategorias
             categories = aliexpress.get_child_categories(int(parent_id))
         else:
-            # Buscar categorias principais
             categories = aliexpress.get_parent_categories()
 
-        # Converter para formato JSON
         result = []
         for category in categories:
             result.append({
@@ -202,30 +163,18 @@ def get_categories():
                 'parent_id': getattr(category, 'parent_category_id', None)
             })
 
-        return jsonify({
-            'success': True,
-            'categories': result
-        })
+        return jsonify({'success': True, 'categories': result})
 
     except Exception as e:
         print(f"❌ Erro ao buscar categorias: {e}")
         traceback.print_exc()
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/aliexpress/hot-products', methods=['GET'])
 def get_hot_products():
-    """Buscar produtos em alta para dropshipping"""
     if not aliexpress:
-        return jsonify({
-            'success': False,
-            'error': 'API AliExpress não inicializada'
-        }), 500
-
+        return jsonify({'success': False, 'error': 'API AliExpress não inicializada'}), 500
     try:
-        # Parâmetros da requisição
         keywords = request.args.get('keywords', '')
         page = int(request.args.get('page', 1))
         page_size = int(request.args.get('page_size', 20))
@@ -233,13 +182,11 @@ def get_hot_products():
         min_price = request.args.get('min_price')
         ship_to_country = request.args.get('ship_to_country', 'BR')
 
-        # Converter preços para formato correto (centavos)
         if max_price:
             max_price = int(float(max_price) * 100)
         if min_price:
             min_price = int(float(min_price) * 100)
 
-        # Buscar produtos em alta
         response = aliexpress.get_hotproducts(
             keywords=keywords,
             page_no=page,
@@ -250,7 +197,6 @@ def get_hot_products():
             sort=models.SortBy.SALE_PRICE_ASC
         )
 
-        # Converter produtos para formato JSON
         products = []
         for product in response.products:
             products.append({
@@ -279,10 +225,7 @@ def get_hot_products():
     except Exception as e:
         print(f"❌ Erro ao buscar produtos em alta: {e}")
         traceback.print_exc()
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
@@ -290,4 +233,4 @@ if __name__ == '__main__':
     print(f"🔑 App Key configurado: {'✅' if APP_KEY else '❌'}")
     print(f"🔑 App Secret configurado: {'✅' if APP_SECRET else '❌'}")
     print(f"🔗 Tracking ID configurado: {'✅' if TRACKING_ID else '❌'}")
-    app.run(host='0.0.0.0', port=port, debug=True) 
+    app.run(host='0.0.0.0', port=port, debug=True)

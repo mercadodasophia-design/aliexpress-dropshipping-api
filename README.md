@@ -62,4 +62,4 @@ A API está configurada para deploy no Render. O Procfile está configurado para
 
 ## 🔗 URL da API
 
-https://mercadodasophia-api.onrender.com 
+https://mercadodasophia-api.onrender.com
