@@ -77,24 +77,36 @@ def exchange_code_for_token(auth_code):
             'redirect_uri': OAUTH_REDIRECT_URI
         }
         
+        print(f"🔄 Trocando código por token...")
+        print(f"📊 Dados: {data}")
+        
         response = requests.post(OAUTH_TOKEN_URL, data=data)
         
+        print(f"📡 Status: {response.status_code}")
+        print(f"📄 Resposta: {response.text}")
+        
         if response.status_code == 200:
-            token_data = response.json()
-            access_token = token_data.get('access_token')
-            refresh_token = token_data.get('refresh_token')
-            
-            print(f"✅ Tokens obtidos com sucesso!")
-            print(f"🔑 Access Token: {access_token[:20]}...")
-            print(f"🔄 Refresh Token: {refresh_token[:20]}...")
-            
-            return True
+            try:
+                token_data = response.json()
+                access_token = token_data.get('access_token')
+                refresh_token = token_data.get('refresh_token')
+                
+                print(f"✅ Tokens obtidos com sucesso!")
+                print(f"🔑 Access Token: {access_token[:20] if access_token else 'N/A'}...")
+                print(f"🔄 Refresh Token: {refresh_token[:20] if refresh_token else 'N/A'}...")
+                
+                return True
+            except json.JSONDecodeError as e:
+                print(f"❌ Erro ao fazer parse da resposta JSON: {e}")
+                print(f"📄 Resposta completa: {response.text}")
+                return False
         else:
             print(f"❌ Erro ao obter tokens: {response.status_code} - {response.text}")
             return False
             
     except Exception as e:
         print(f"❌ Erro ao trocar código por token: {e}")
+        traceback.print_exc()
         return False
 
 def refresh_access_token():
