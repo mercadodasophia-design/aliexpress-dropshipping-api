@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, redirect, session
 from flask_cors import CORS
 import os
 from dotenv import load_dotenv
@@ -9,11 +9,13 @@ import hashlib
 import time
 import hmac
 import base64
+import urllib.parse
 
 # Carregar variáveis de ambiente
 load_dotenv('./config.env')
 
 app = Flask(__name__)
+app.secret_key = 'mercadodasophia_secret_key'
 CORS(app)
 
 # Configurações AliExpress Oficial
@@ -21,8 +23,17 @@ APP_KEY = os.getenv('ALIEXPRESS_APP_KEY')
 APP_SECRET = os.getenv('ALIEXPRESS_APP_SECRET')
 TRACKING_ID = os.getenv('ALIEXPRESS_TRACKING_ID', 'mercadodasophia_tracking')
 
+# OAuth2 URLs
+OAUTH_AUTH_URL = "https://auth.aliexpress.com/oauth/authorize"
+OAUTH_TOKEN_URL = "https://api-sg.aliexpress.com/oauth/token"
+OAUTH_REDIRECT_URI = "https://mercadodasophia-api.onrender.com/oauth/callback"
+
 # API Base URL
 API_BASE_URL = "https://api-sg.aliexpress.com/sync"
+
+# Armazenar tokens
+access_token = None
+refresh_token = None
 
 def generate_signature(params, app_secret):
     """Gerar assinatura para API AliExpress"""
@@ -40,26 +51,105 @@ def generate_signature(params, app_secret):
     
     return signature
 
+def get_oauth_url():
+    """Gerar URL de autorização OAuth2"""
+    params = {
+        'response_type': 'code',
+        'client_id': APP_KEY,
+        'redirect_uri': OAUTH_REDIRECT_URI,
+        'state': 'mercadodasophia_state',
+        'scope': 'read'
+    }
+    
+    query_string = urllib.parse.urlencode(params)
+    return f"{OAUTH_AUTH_URL}?{query_string}"
+
+def exchange_code_for_token(auth_code):
+    """Trocar código de autorização por token"""
+    global access_token, refresh_token
+    
+    try:
+        data = {
+            'grant_type': 'authorization_code',
+            'client_id': APP_KEY,
+            'client_secret': APP_SECRET,
+            'code': auth_code,
+            'redirect_uri': OAUTH_REDIRECT_URI
+        }
+        
+        response = requests.post(OAUTH_TOKEN_URL, data=data)
+        
+        if response.status_code == 200:
+            token_data = response.json()
+            access_token = token_data.get('access_token')
+            refresh_token = token_data.get('refresh_token')
+            
+            print(f"✅ Tokens obtidos com sucesso!")
+            print(f"🔑 Access Token: {access_token[:20]}...")
+            print(f"🔄 Refresh Token: {refresh_token[:20]}...")
+            
+            return True
+        else:
+            print(f"❌ Erro ao obter tokens: {response.status_code} - {response.text}")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Erro ao trocar código por token: {e}")
+        return False
+
+def refresh_access_token():
+    """Renovar access token usando refresh token"""
+    global access_token, refresh_token
+    
+    if not refresh_token:
+        return False
+        
+    try:
+        data = {
+            'grant_type': 'refresh_token',
+            'client_id': APP_KEY,
+            'client_secret': APP_SECRET,
+            'refresh_token': refresh_token
+        }
+        
+        response = requests.post(OAUTH_TOKEN_URL, data=data)
+        
+        if response.status_code == 200:
+            token_data = response.json()
+            access_token = token_data.get('access_token')
+            refresh_token = token_data.get('refresh_token', refresh_token)
+            
+            print(f"✅ Access token renovado!")
+            return True
+        else:
+            print(f"❌ Erro ao renovar token: {response.status_code} - {response.text}")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Erro ao renovar token: {e}")
+        return False
+
 def call_aliexpress_api(method, params):
-    """Chamar API oficial do AliExpress"""
+    """Chamar API oficial do AliExpress com OAuth2"""
+    global access_token
+    
+    if not access_token:
+        print("❌ Access token não disponível. Faça OAuth2 primeiro.")
+        return None
+    
     try:
         # Parâmetros básicos
         base_params = {
-            'app_key': APP_KEY,
             'method': method,
-            'timestamp': str(int(time.time())),
+            'access_token': access_token,
             'format': 'json',
             'v': '2.0',
-            'sign_method': 'md5',
+            'timestamp': str(int(time.time())),
             'tracking_id': TRACKING_ID
         }
         
         # Adicionar parâmetros específicos
         base_params.update(params)
-        
-        # Gerar assinatura
-        signature = generate_signature(base_params, APP_SECRET)
-        base_params['sign'] = signature
         
         print(f"🔍 Chamando API: {method}")
         print(f"📊 Parâmetros: {base_params}")
@@ -72,6 +162,17 @@ def call_aliexpress_api(method, params):
         
         if response.status_code == 200:
             return response.json()
+        elif response.status_code == 401:
+            # Token expirado, tentar renovar
+            print("🔄 Token expirado, tentando renovar...")
+            if refresh_access_token():
+                # Tentar novamente com novo token
+                base_params['access_token'] = access_token
+                response = requests.post(API_BASE_URL, data=base_params)
+                if response.status_code == 200:
+                    return response.json()
+            
+            return None
         else:
             print(f"❌ Erro na API AliExpress: {response.status_code} - {response.text}")
             return None
@@ -90,12 +191,55 @@ def health_check():
         'app_key_configured': bool(APP_KEY),
         'app_secret_configured': bool(APP_SECRET),
         'tracking_id_configured': bool(TRACKING_ID),
-        'api_base_url': API_BASE_URL
+        'api_base_url': API_BASE_URL,
+        'oauth_configured': bool(OAUTH_REDIRECT_URI),
+        'access_token_available': bool(access_token)
     })
+
+@app.route('/oauth/authorize', methods=['GET'])
+def oauth_authorize():
+    """Iniciar fluxo OAuth2"""
+    auth_url = get_oauth_url()
+    return jsonify({
+        'success': True,
+        'auth_url': auth_url,
+        'message': 'Acesse a URL para autorizar a aplicação'
+    })
+
+@app.route('/oauth/callback', methods=['GET'])
+def oauth_callback():
+    """Callback OAuth2"""
+    auth_code = request.args.get('code')
+    state = request.args.get('state')
+    
+    if not auth_code:
+        return jsonify({
+            'success': False,
+            'error': 'Código de autorização não fornecido'
+        }), 400
+    
+    if exchange_code_for_token(auth_code):
+        return jsonify({
+            'success': True,
+            'message': 'OAuth2 autorizado com sucesso!',
+            'access_token_available': bool(access_token)
+        })
+    else:
+        return jsonify({
+            'success': False,
+            'error': 'Erro ao obter tokens OAuth2'
+        }), 500
 
 @app.route('/api/aliexpress/products', methods=['GET'])
 def get_products():
     """Buscar produtos do AliExpress para dropshipping"""
+    if not access_token:
+        return jsonify({
+            'success': False,
+            'error': 'OAuth2 não autorizado. Faça autorização primeiro.',
+            'auth_url': get_oauth_url()
+        }), 401
+    
     try:
         # Parâmetros da requisição
         keywords = request.args.get('keywords', '')
@@ -119,7 +263,7 @@ def get_products():
         if min_price:
             params['min_sale_price'] = str(int(float(min_price) * 100))
 
-        # Chamar API AliExpress - usando método correto
+        # Chamar API AliExpress
         result = call_aliexpress_api('aliexpress.ds.product.search', params)
         
         if result and 'result' in result:
@@ -168,6 +312,13 @@ def get_products():
 @app.route('/api/aliexpress/products/details', methods=['GET'])
 def get_product_details():
     """Buscar detalhes de produtos específicos"""
+    if not access_token:
+        return jsonify({
+            'success': False,
+            'error': 'OAuth2 não autorizado. Faça autorização primeiro.',
+            'auth_url': get_oauth_url()
+        }), 401
+    
     try:
         product_ids = request.args.get('product_ids', '')
         if not product_ids:
@@ -181,7 +332,7 @@ def get_product_details():
             'product_ids': product_ids
         }
 
-        # Chamar API AliExpress - usando método correto
+        # Chamar API AliExpress
         result = call_aliexpress_api('aliexpress.ds.product.details', params)
         
         if result and 'result' in result:
@@ -227,11 +378,18 @@ def get_product_details():
 @app.route('/api/aliexpress/categories', methods=['GET'])
 def get_categories():
     """Buscar categorias do AliExpress"""
+    if not access_token:
+        return jsonify({
+            'success': False,
+            'error': 'OAuth2 não autorizado. Faça autorização primeiro.',
+            'auth_url': get_oauth_url()
+        }), 401
+    
     try:
         # Parâmetros para API AliExpress
         params = {}
 
-        # Chamar API AliExpress - usando método correto
+        # Chamar API AliExpress
         result = call_aliexpress_api('aliexpress.ds.category.list', params)
         
         if result and 'result' in result:
@@ -269,6 +427,13 @@ def get_categories():
 @app.route('/api/aliexpress/hot-products', methods=['GET'])
 def get_hot_products():
     """Buscar produtos em alta para dropshipping"""
+    if not access_token:
+        return jsonify({
+            'success': False,
+            'error': 'OAuth2 não autorizado. Faça autorização primeiro.',
+            'auth_url': get_oauth_url()
+        }), 401
+    
     try:
         # Parâmetros da requisição
         page = int(request.args.get('page', 1))
@@ -281,7 +446,7 @@ def get_hot_products():
             'sort': 'SALE_PRICE_ASC'
         }
 
-        # Chamar API AliExpress - usando método correto
+        # Chamar API AliExpress
         result = call_aliexpress_api('aliexpress.ds.hot.products', params)
         
         if result and 'result' in result:
@@ -329,9 +494,10 @@ def get_hot_products():
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    print(f"🚀 API ALIEXPRESS OFICIAL iniciando na porta {port}...")
+    print(f"🚀 API ALIEXPRESS OFICIAL com OAuth2 iniciando na porta {port}...")
     print(f"🔑 App Key configurado: {'✅' if APP_KEY else '❌'}")
     print(f"🔐 App Secret configurado: {'✅' if APP_SECRET else '❌'}")
     print(f"📊 Tracking ID: {TRACKING_ID}")
     print(f"🌐 API Base URL: {API_BASE_URL}")
+    print(f"🔗 OAuth Redirect URI: {OAUTH_REDIRECT_URI}")
     app.run(host='0.0.0.0', port=port, debug=True)
