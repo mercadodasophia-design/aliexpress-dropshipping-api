@@ -61,8 +61,14 @@ def call_aliexpress_api(method, params):
         signature = generate_signature(base_params, APP_SECRET)
         base_params['sign'] = signature
         
+        print(f"🔍 Chamando API: {method}")
+        print(f"📊 Parâmetros: {base_params}")
+        
         # Fazer requisição
         response = requests.post(API_BASE_URL, data=base_params)
+        
+        print(f"📡 Status: {response.status_code}")
+        print(f"📄 Resposta: {response.text[:500]}...")
         
         if response.status_code == 200:
             return response.json()
@@ -113,8 +119,8 @@ def get_products():
         if min_price:
             params['min_sale_price'] = str(int(float(min_price) * 100))
 
-        # Chamar API AliExpress
-        result = call_aliexpress_api('aliexpress.ds.product.get', params)
+        # Chamar API AliExpress - usando método correto
+        result = call_aliexpress_api('aliexpress.ds.product.search', params)
         
         if result and 'result' in result:
             products_data = result['result']
@@ -175,8 +181,8 @@ def get_product_details():
             'product_ids': product_ids
         }
 
-        # Chamar API AliExpress
-        result = call_aliexpress_api('aliexpress.ds.product.details.get', params)
+        # Chamar API AliExpress - usando método correto
+        result = call_aliexpress_api('aliexpress.ds.product.details', params)
         
         if result and 'result' in result:
             product_data = result['result']
@@ -225,8 +231,8 @@ def get_categories():
         # Parâmetros para API AliExpress
         params = {}
 
-        # Chamar API AliExpress
-        result = call_aliexpress_api('aliexpress.ds.category.get', params)
+        # Chamar API AliExpress - usando método correto
+        result = call_aliexpress_api('aliexpress.ds.category.list', params)
         
         if result and 'result' in result:
             categories_data = result['result']
@@ -275,8 +281,8 @@ def get_hot_products():
             'sort': 'SALE_PRICE_ASC'
         }
 
-        # Chamar API AliExpress
-        result = call_aliexpress_api('aliexpress.ds.hot.products.get', params)
+        # Chamar API AliExpress - usando método correto
+        result = call_aliexpress_api('aliexpress.ds.hot.products', params)
         
         if result and 'result' in result:
             products_data = result['result']
