@@ -69,15 +69,13 @@ def exchange_code_for_token(auth_code):
     global access_token, refresh_token
     
     try:
-        # Parâmetros corretos para API AliExpress OAuth2
+        # Parâmetros corretos para API AliExpress OAuth2 (documentação oficial)
         data = {
             'grant_type': 'authorization_code',
             'client_id': APP_KEY,
             'client_secret': APP_SECRET,
             'code': auth_code,
-            'redirect_uri': OAUTH_REDIRECT_URI,
-            'format': 'json',
-            'v': '2.0'
+            'redirect_uri': OAUTH_REDIRECT_URI
         }
         
         print(f"🔄 Trocando código por token...")
@@ -86,10 +84,14 @@ def exchange_code_for_token(auth_code):
         # Headers corretos para API AliExpress
         headers = {
             'Content-Type': 'application/x-www-form-urlencoded',
-            'Accept': 'application/json'
+            'Accept': 'application/json',
+            'User-Agent': 'MercadoDaSophia/1.0'
         }
         
-        response = requests.post(OAUTH_TOKEN_URL, data=data, headers=headers)
+        # URL correta para OAuth2 AliExpress
+        oauth_url = "https://api-sg.aliexpress.com/oauth/token"
+        
+        response = requests.post(oauth_url, data=data, headers=headers)
         
         print(f"📡 Status: {response.status_code}")
         print(f"📄 Resposta: {response.text}")
