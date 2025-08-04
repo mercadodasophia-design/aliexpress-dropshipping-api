@@ -115,13 +115,28 @@ export const handleCallback = async (code) => {
   console.log('🔍 Processando callback OAuth com code:', code);
   
   try {
-    const response = await axios.post(`https://api-sg.aliexpress.com/oauth/token`, new URLSearchParams({
+    const params = new URLSearchParams({
       grant_type: "authorization_code",
       client_id: FINAL_APP_KEY,
       client_secret: FINAL_APP_SECRET,
       code,
       redirect_uri: FINAL_REDIRECT_URI,
-    }));
+    });
+    
+    console.log('🔍 Parâmetros OAuth enviados:', {
+      grant_type: "authorization_code",
+      client_id: FINAL_APP_KEY,
+      client_secret: "***HIDDEN***",
+      code,
+      redirect_uri: FINAL_REDIRECT_URI,
+    });
+    
+    const response = await axios.post(`https://api-sg.aliexpress.com/oauth/token`, params, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json'
+      }
+    });
     
     console.log('✅ Resposta OAuth completa:', {
       status: response.status,
