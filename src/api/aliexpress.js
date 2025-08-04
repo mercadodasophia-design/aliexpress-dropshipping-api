@@ -22,18 +22,26 @@ const FINAL_REDIRECT_URI = REDIRECT_URI || DEFAULT_REDIRECT_URI;
 // Função para sincronizar timestamp com servidor da AliExpress
 async function getAliExpressTimestamp() {
   try {
-    // Sincroniza com servidor da AliExpress
-    const response = await axios.head('https://api-sg.aliexpress.com');
-    const serverDate = new Date(response.headers['date']); // GMT
+    // Sincroniza com servidor da AliExpress usando fetch
+    const response = await fetch('https://api-sg.aliexpress.com', { method: 'HEAD' });
+    const dateHeader = response.headers.get('date'); // Ex: Mon, 04 Aug 2025 18:45:34 GMT
+    
+    if (!dateHeader) {
+      throw new Error('Header Date não encontrado');
+    }
+    
+    const serverDate = new Date(dateHeader);
     const timestamp = Math.floor(serverDate.getTime() / 1000);
     
     console.log('🔍 Timestamp sincronizado com AliExpress:', timestamp);
     console.log('🔍 Horário do servidor AliExpress:', serverDate.toString());
-    console.log('🔍 Horário local:', new Date().toString());
+    console.log('🔍 Header Date recebido:', dateHeader);
     
     return timestamp;
   } catch (error) {
-    console.log('⚠️ Erro ao sincronizar com AliExpress, usando timestamp local');
+    console.log('⚠️ Erro ao sincronizar com AliExpress:', error.message);
+    console.log('⚠️ Usando timestamp local como fallback');
+    
     // Fallback para timestamp local
     const now = new Date();
     const timestamp = Math.floor(now.getTime() / 1000);
@@ -93,8 +101,18 @@ export const handleCallback = async (code) => {
 
 // Função genérica para chamar métodos ds.*
 const callAliExpress = async (method, extraParams={}) => {
-  // Timestamp UTC sincronizado com AliExpress
-  const timestamp = await getAliExpressTimestamp();
+  // Compara timestamps para debug
+  const localEpoch = Math.floor(Date.now() / 1000);
+  const aliExpressEpoch = await getAliExpressTimestamp();
+  const difference = Math.abs(localEpoch - aliExpressEpoch);
+  
+  console.log('🔍 Comparação de timestamps:');
+  console.log('🔍 Local epoch:', localEpoch);
+  console.log('🔍 AliExpress epoch:', aliExpressEpoch);
+  console.log('🔍 Diferença em segundos:', difference);
+  console.log('🔍 Aceitável (< 180s):', difference < 180 ? '✅' : '❌');
+  
+  const timestamp = aliExpressEpoch;
   const params = {
     method,
     app_key: FINAL_APP_KEY,
