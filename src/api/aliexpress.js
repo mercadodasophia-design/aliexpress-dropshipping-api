@@ -33,6 +33,8 @@ function getAliExpressTimestamp() {
   console.log('🔍 Timestamp UTC gerado:', timestamp);
   console.log('🔍 Horário local:', now.toString());
   console.log('🔍 Horário UTC:', now.toISOString());
+  console.log('🔍 Timezone:', Intl.DateTimeFormat().resolvedOptions().timeZone);
+  console.log('🔍 Offset:', now.getTimezoneOffset(), 'minutos');
   
   return timestamp;
 }
