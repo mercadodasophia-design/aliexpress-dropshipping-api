@@ -67,7 +67,13 @@ const callAliExpress = async (method, extraParams={}) => {
   console.log('🔑 Assinatura:', sign);
   
   try {
-    const { data } = await axios.get(`${BASE_URL}/router/rest`, { params: { ...params, sign } });
+    const { data } = await axios.post(`${BASE_URL}/router/rest`, 
+      new URLSearchParams({ ...params, sign }), {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      }
+    );
     console.log('✅ Resposta:', data);
     return data;
   } catch (error) {
@@ -88,7 +94,7 @@ export const searchProducts = async (keyword) => {
     timestamp,
     sign_method: "md5",
     format: "json",
-    v: "2.0",
+    v: "1.0",
     keyword: keyword,
     local: "en_US",
     countryCode: "US",
@@ -104,9 +110,13 @@ export const searchProducts = async (keyword) => {
   console.log('🔑 Assinatura:', sign);
   
   try {
-    const { data } = await axios.get(`${BASE_URL}/router/rest`, { 
-      params: { ...params, sign } 
-    });
+    const { data } = await axios.post(`${BASE_URL}/router/rest`, 
+      new URLSearchParams({ ...params, sign }), {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      }
+    );
     console.log('✅ Resposta produtos:', data);
     return data;
   } catch (error) {
