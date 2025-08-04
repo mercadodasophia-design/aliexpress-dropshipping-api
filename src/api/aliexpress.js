@@ -128,10 +128,10 @@ export const handleCallback = async (code) => {
     // Implementação exata conforme documentação AliExpress
     console.log('🔍 Tentando endpoint OAuth:', "https://api-sg.aliexpress.com/oauth/token");
     
-    // ✅ Endpoint oficial da documentação AliExpress
-    const endpoint = "https://api-sg.aliexpress.com/auth/token/create";
+    // ✅ Endpoint oficial para AliExpress Dropshipping API
+    const endpoint = "https://api-sg.aliexpress.com/oauth/token";
     
-    console.log('🔍 Usando endpoint oficial:', endpoint);
+    console.log('🔍 Usando endpoint oficial para Dropshipping:', endpoint);
     
     const response = await axios.post(
       endpoint,
