@@ -1,6 +1,21 @@
 import express from "express";
 import { getAuthUrl, handleCallback, searchProducts, createOrder, getTracking, testApiConnection, searchProductsByCategory } from "../api/aliexpress.js";
 import { loadTokens } from "../utils/tokenManager.js";
+import dotenv from "dotenv";
+
+dotenv.config({ path: '../../config.env' });
+
+// Valores padrão para desenvolvimento
+const DEFAULT_APP_KEY = "517616";
+const DEFAULT_APP_SECRET = "TTqNmTMs5Q0QiPbulDNenhXr2My18nN4";
+const DEFAULT_REDIRECT_URI = "https://mercadodasophia-api.onrender.com/api/aliexpress/oauth-callback";
+
+const { APP_KEY, APP_SECRET, REDIRECT_URI } = process.env;
+
+// Usar valores das variáveis de ambiente ou padrões
+const FINAL_APP_KEY = APP_KEY || DEFAULT_APP_KEY;
+const FINAL_APP_SECRET = APP_SECRET || DEFAULT_APP_SECRET;
+const FINAL_REDIRECT_URI = REDIRECT_URI || DEFAULT_REDIRECT_URI;
 
 const router = express.Router();
 
