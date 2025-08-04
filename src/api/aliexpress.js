@@ -109,13 +109,25 @@ const generateSign = (params, isSystemInterface = false, apiPath = '') => {
   return hash;
 };
 
-export const getAuthUrl = () => `https://api-sg.aliexpress.com/oauth/authorize?response_type=code&client_id=${FINAL_APP_KEY}&redirect_uri=${encodeURIComponent(FINAL_REDIRECT_URI)}`;
+export const getAuthUrl = () => {
+  const authUrl = `https://api-sg.aliexpress.com/oauth/authorize?response_type=code&client_id=${FINAL_APP_KEY}&redirect_uri=${encodeURIComponent(FINAL_REDIRECT_URI)}`;
+  console.log('🔍 URL de autorização gerada:', authUrl);
+  console.log('🔍 Parâmetros da URL:', {
+    response_type: 'code',
+    client_id: FINAL_APP_KEY,
+    redirect_uri: FINAL_REDIRECT_URI,
+    encoded_redirect_uri: encodeURIComponent(FINAL_REDIRECT_URI)
+  });
+  return authUrl;
+};
 
 export const handleCallback = async (code) => {
   console.log('🔍 Processando callback OAuth com code:', code);
   
   try {
     // Implementação exata conforme documentação AliExpress
+    console.log('🔍 Tentando endpoint OAuth:', "https://api-sg.aliexpress.com/oauth/token");
+    
     const response = await axios.post(
       "https://api-sg.aliexpress.com/oauth/token",
       new URLSearchParams({
@@ -127,7 +139,8 @@ export const handleCallback = async (code) => {
       }),
       { 
         headers: { 
-          "Content-Type": "application/x-www-form-urlencoded" 
+          "Content-Type": "application/x-www-form-urlencoded",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
         } 
       }
     );

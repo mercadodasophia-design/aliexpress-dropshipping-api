@@ -108,4 +108,26 @@ router.get("/tokens/status", (req, res) => {
   }
 });
 
+// Rota para verificar configuração do app
+router.get("/app/config", (req, res) => {
+  try {
+    console.log('🔍 Configuração do app:', {
+      APP_KEY: FINAL_APP_KEY,
+      APP_SECRET: '***HIDDEN***',
+      REDIRECT_URI: FINAL_REDIRECT_URI,
+      AUTH_URL: getAuthUrl()
+    });
+    
+    res.json({
+      success: true,
+      app_key: FINAL_APP_KEY,
+      redirect_uri: FINAL_REDIRECT_URI,
+      auth_url: getAuthUrl()
+    });
+  } catch (error) {
+    console.log('❌ Erro ao verificar configuração:', error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 export default router;
