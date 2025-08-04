@@ -110,7 +110,7 @@ const generateSign = (params, isSystemInterface = false, apiPath = '') => {
 };
 
 export const getAuthUrl = () => {
-  const authUrl = `https://api-sg.aliexpress.com/oauth/authorize?response_type=code&client_id=${FINAL_APP_KEY}&redirect_uri=${encodeURIComponent(FINAL_REDIRECT_URI)}`;
+  const authUrl = `https://api-sg.aliexpress.com/oauth/authorize?response_type=code&force_auth=true&client_id=${FINAL_APP_KEY}&redirect_uri=${encodeURIComponent(FINAL_REDIRECT_URI)}`;
   console.log('🔍 URL de autorização gerada:', authUrl);
   console.log('🔍 Parâmetros da URL:', {
     response_type: 'code',
@@ -128,35 +128,40 @@ export const handleCallback = async (code) => {
     // Implementação exata conforme documentação AliExpress
     console.log('🔍 Tentando endpoint OAuth:', "https://api-sg.aliexpress.com/oauth/token");
     
-    // ✅ Endpoint oficial para AliExpress Dropshipping API
-    const endpoint = "https://api-sg.aliexpress.com/oauth/token";
+    // ✅ Endpoint oficial conforme documentação AliExpress
+    const endpoint = "https://api-sg.aliexpress.com/auth/token/create";
     
-    console.log('🔍 Usando endpoint oficial para Dropshipping:', endpoint);
+    console.log('🔍 Usando endpoint oficial conforme documentação:', endpoint);
+    
+    // Parâmetros conforme documentação oficial
+    const oauthParams = {
+      code: code,
+      app_key: FINAL_APP_KEY,
+      app_secret: FINAL_APP_SECRET,
+    };
+    
+    console.log('🔍 Parâmetros OAuth detalhados:', oauthParams);
     
     const response = await axios.post(
       endpoint,
-      new URLSearchParams({
-        grant_type: "authorization_code",
-        client_id: FINAL_APP_KEY,
-        client_secret: FINAL_APP_SECRET,
-        redirect_uri: FINAL_REDIRECT_URI,
-        code: code,
-      }),
+      new URLSearchParams(oauthParams),
       { 
         headers: { 
           "Content-Type": "application/x-www-form-urlencoded",
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-        } 
+          "Accept": "application/json",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        },
+        timeout: 10000
       }
     );
     
     console.log('🔍 Parâmetros OAuth enviados:', {
-      grant_type: "authorization_code",
-      client_id: FINAL_APP_KEY,
-      client_secret: "***HIDDEN***",
-      redirect_uri: FINAL_REDIRECT_URI,
       code: code,
+      app_key: FINAL_APP_KEY,
+      app_secret: "***HIDDEN***",
     });
+    
+    console.log('🔍 URLSearchParams string:', new URLSearchParams(oauthParams).toString());
     
     console.log('✅ Resposta OAuth completa:', {
       status: response.status,
@@ -173,6 +178,35 @@ export const handleCallback = async (code) => {
       expires_in: response.data?.expires_in || 'N/A',
       token_type: response.data?.token_type || 'N/A'
     });
+    
+    // Verifica se a resposta é HTML em vez de JSON
+    if (typeof response.data === 'string' && response.data.includes('<html>')) {
+      console.log('❌ Resposta é HTML em vez de JSON. Tentando abordagem alternativa...');
+      
+      // Tenta sem o header Accept
+      const response2 = await axios.post(
+        endpoint,
+        new URLSearchParams(oauthParams),
+        { 
+          headers: { 
+            "Content-Type": "application/x-www-form-urlencoded",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+          },
+          timeout: 10000
+        }
+      );
+      
+      console.log('✅ Segunda tentativa - Resposta:', {
+        status: response2.status,
+        data_type: typeof response2.data,
+        has_access_token: !!response2.data?.access_token
+      });
+      
+      if (response2.data?.access_token) {
+        saveTokens(response2.data);
+        return response2.data;
+      }
+    }
     
     saveTokens(response.data);
     return response.data;
