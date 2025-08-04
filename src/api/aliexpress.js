@@ -6,7 +6,18 @@ import { saveTokens, loadTokens, refreshTokenIfNeeded } from "../utils/tokenMana
 dotenv.config({ path: '../../config.env' });
 
 const BASE_URL = "https://api-sg.aliexpress.com";
+
+// Valores padrão para desenvolvimento
+const DEFAULT_APP_KEY = "517616";
+const DEFAULT_APP_SECRET = "TTqNmTMs5Q0QiPbulDNenhXr2My18nN4";
+const DEFAULT_REDIRECT_URI = "https://mercadodasophia-api.onrender.com/api/aliexpress/oauth-callback";
+
 const { APP_KEY, APP_SECRET, REDIRECT_URI } = process.env;
+
+// Usar valores das variáveis de ambiente ou padrões
+const FINAL_APP_KEY = APP_KEY || DEFAULT_APP_KEY;
+const FINAL_APP_SECRET = APP_SECRET || DEFAULT_APP_SECRET;
+const FINAL_REDIRECT_URI = REDIRECT_URI || DEFAULT_REDIRECT_URI;
 
 // Gera assinatura MD5
 const generateSign = (params) => {
@@ -21,15 +32,15 @@ const generateSign = (params) => {
   return crypto.createHash("md5").update(signStr).digest("hex").toUpperCase();
 };
 
-export const getAuthUrl = () => `${BASE_URL}/oauth/authorize?response_type=code&client_id=${APP_KEY}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
+export const getAuthUrl = () => `${BASE_URL}/oauth/authorize?response_type=code&client_id=${FINAL_APP_KEY}&redirect_uri=${encodeURIComponent(FINAL_REDIRECT_URI)}`;
 
 export const handleCallback = async (code) => {
   const { data } = await axios.post(`${BASE_URL}/oauth/token`, new URLSearchParams({
     grant_type: "authorization_code",
-    client_id: APP_KEY,
-    client_secret: APP_SECRET,
+    client_id: FINAL_APP_KEY,
+    client_secret: FINAL_APP_SECRET,
     code,
-    redirect_uri: REDIRECT_URI,
+    redirect_uri: FINAL_REDIRECT_URI,
   }));
   saveTokens(data);
   return data;
@@ -41,7 +52,7 @@ const callAliExpress = async (method, extraParams={}) => {
   const timestamp = new Date().toISOString().slice(0,19).replace("T"," ");
   const params = {
     method,
-    app_key: APP_KEY,
+    app_key: FINAL_APP_KEY,
     session: tokens.access_token,
     timestamp,
     sign_method: "md5",

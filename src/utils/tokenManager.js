@@ -6,6 +6,13 @@ dotenv.config({ path: '../../config.env' });
 const TOKEN_FILE = "./data/tokens.json";
 const { APP_KEY, APP_SECRET } = process.env;
 
+// Valores padrão
+const DEFAULT_APP_KEY = "517616";
+const DEFAULT_APP_SECRET = "TTqNmTMs5Q0QiPbulDNenhXr2My18nN4";
+
+const FINAL_APP_KEY = APP_KEY || DEFAULT_APP_KEY;
+const FINAL_APP_SECRET = APP_SECRET || DEFAULT_APP_SECRET;
+
 export const saveTokens = (tokens) => {
   fs.writeFileSync(TOKEN_FILE, JSON.stringify({ ...tokens, updated_at: Date.now() }, null, 2));
 };
@@ -27,8 +34,8 @@ export const refreshTokenIfNeeded = async () => {
   console.log("🔄 Renovando token...");
   const { data } = await axios.post(`https://api-sg.aliexpress.com/oauth/token`, new URLSearchParams({
     grant_type: "refresh_token",
-    client_id: APP_KEY,
-    client_secret: APP_SECRET,
+    client_id: FINAL_APP_KEY,
+    client_secret: FINAL_APP_SECRET,
     refresh_token: tokens.refresh_token,
   }));
   saveTokens(data);
