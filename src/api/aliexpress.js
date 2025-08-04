@@ -22,8 +22,8 @@ const FINAL_REDIRECT_URI = REDIRECT_URI || DEFAULT_REDIRECT_URI;
 // Função para gerar timestamp UTC no formato AliExpress
 function getAliExpressTimestamp() {
   const now = new Date();
-  // Formato yyyy-MM-dd HH:mm:ss em UTC puro
-  const timestamp = now.toISOString().slice(0, 19).replace('T', ' ');
+  // Formato ISO 8601 UTC aceito pela API: YYYY-MM-DDTHH:mm:ssZ
+  const timestamp = now.toISOString().replace(/\.\d{3}Z$/, 'Z');
   
   console.log('🔍 Timestamp UTC gerado:', timestamp);
   console.log('🔍 Horário local:', now.toString());
