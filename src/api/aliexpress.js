@@ -22,12 +22,18 @@ const FINAL_REDIRECT_URI = REDIRECT_URI || DEFAULT_REDIRECT_URI;
 // Função para gerar timestamp UTC no formato AliExpress
 function getAliExpressTimestamp() {
   const now = new Date();
-  return now.getUTCFullYear() + '-' +
+  const timestamp = now.getUTCFullYear() + '-' +
     String(now.getUTCMonth() + 1).padStart(2, '0') + '-' +
     String(now.getUTCDate()).padStart(2, '0') + ' ' +
     String(now.getUTCHours()).padStart(2, '0') + ':' +
     String(now.getUTCMinutes()).padStart(2, '0') + ':' +
     String(now.getUTCSeconds()).padStart(2, '0');
+  
+  console.log('🔍 Timestamp UTC gerado:', timestamp);
+  console.log('🔍 Horário local:', now.toString());
+  console.log('🔍 Horário UTC:', now.toISOString());
+  
+  return timestamp;
 }
 
 // Gera assinatura HMAC-SHA256 (padrão AliExpress Open Platform)
