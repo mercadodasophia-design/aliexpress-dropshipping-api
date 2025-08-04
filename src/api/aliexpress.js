@@ -100,10 +100,9 @@ const callAliExpress = async (method, extraParams={}) => {
   console.log('🔑 Assinatura:', sign);
   
   try {
-    // URL-encode o timestamp apenas para a URL (não para assinatura)
+    // Deixa o URLSearchParams cuidar do encode automaticamente
     const query = new URLSearchParams({
       ...params,
-      timestamp: encodeURIComponent(params.timestamp),
       sign
     }).toString();
     
@@ -146,10 +145,9 @@ export const searchProducts = async (keyword) => {
   console.log('🔑 Assinatura:', sign);
   
   try {
-    // URL-encode o timestamp apenas para a URL (não para assinatura)
+    // Deixa o URLSearchParams cuidar do encode automaticamente
     const query = new URLSearchParams({
       ...params,
-      timestamp: encodeURIComponent(params.timestamp),
       sign
     }).toString();
     
