@@ -186,7 +186,7 @@ export const searchProducts = async (keyword) => {
     format: "json",
     v: "1.0",
     keyWords: keyword, // Case-sensitive: keyWords (plural, com W maiúsculo)
-    locale: "en_US", // Case-sensitive: locale (não local)
+    local: "en_US", // Parâmetro obrigatório: local (não locale)
     countryCode: "US", // Case-sensitive: countryCode
     currency: "USD",
     pageSize: 20,
