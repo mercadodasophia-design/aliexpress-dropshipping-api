@@ -17,11 +17,20 @@ router.get("/config", (req, res) => {
 router.get("/oauth-callback", async (req, res) => {
   const code = req.query.code;
   if (!code) return res.status(400).send("Código de autorização não encontrado");
+  
+  console.log('🔍 Callback OAuth recebido com code:', code);
+  
   try {
-    await handleCallback(code);
+    const result = await handleCallback(code);
+    console.log('✅ Callback OAuth processado com sucesso:', {
+      has_access_token: !!result.access_token,
+      has_refresh_token: !!result.refresh_token,
+      expires_in: result.expires_in
+    });
     res.send("✅ Autorização concluída e tokens salvos!");
   } catch (err) {
-    res.status(500).send(err.message);
+    console.log('❌ Erro no callback OAuth:', err.message);
+    res.status(500).send(`Erro: ${err.message}`);
   }
 });
 
@@ -81,7 +90,15 @@ router.get("/tokens/status", (req, res) => {
       refresh_token: tokens.refresh_token ? "✅ Presente" : "❌ Ausente",
       expires_in: tokens.expires_in || "N/A",
       updated_at: new Date(tokens.updated_at).toLocaleString(),
-      expires_at: new Date(tokens.updated_at + (tokens.expires_in || 3600) * 1000).toLocaleString()
+      expires_at: new Date(tokens.updated_at + (tokens.expires_in || 3600) * 1000).toLocaleString(),
+      // Debug: mostrar dados completos
+      debug: {
+        has_access_token: !!tokens.access_token,
+        has_refresh_token: !!tokens.refresh_token,
+        token_keys: Object.keys(tokens),
+        access_token_length: tokens.access_token?.length || 0,
+        refresh_token_length: tokens.refresh_token?.length || 0
+      }
     });
   } else {
     res.json({
