@@ -19,6 +19,17 @@ const FINAL_APP_KEY = APP_KEY || DEFAULT_APP_KEY;
 const FINAL_APP_SECRET = APP_SECRET || DEFAULT_APP_SECRET;
 const FINAL_REDIRECT_URI = REDIRECT_URI || DEFAULT_REDIRECT_URI;
 
+// Função para gerar timestamp UTC no formato AliExpress
+function getAliExpressTimestamp() {
+  const now = new Date();
+  return now.getUTCFullYear() + '-' +
+    String(now.getUTCMonth() + 1).padStart(2, '0') + '-' +
+    String(now.getUTCDate()).padStart(2, '0') + ' ' +
+    String(now.getUTCHours()).padStart(2, '0') + ':' +
+    String(now.getUTCMinutes()).padStart(2, '0') + ':' +
+    String(now.getUTCSeconds()).padStart(2, '0');
+}
+
 // Gera assinatura HMAC-SHA256 (padrão AliExpress Open Platform)
 const generateSign = (params) => {
   // Converte valores para string e remove espaços extras (trim)
@@ -67,14 +78,8 @@ export const handleCallback = async (code) => {
 
 // Função genérica para chamar métodos ds.*
 const callAliExpress = async (method, extraParams={}) => {
-  // Formato correto: YYYY-MM-DD HH:mm:ss (um espaço apenas)
-  const now = new Date();
-  const timestamp = now.getFullYear() + '-' + 
-                   String(now.getMonth() + 1).padStart(2, '0') + '-' + 
-                   String(now.getDate()).padStart(2, '0') + ' ' + 
-                   String(now.getHours()).padStart(2, '0') + ':' + 
-                   String(now.getMinutes()).padStart(2, '0') + ':' + 
-                   String(now.getSeconds()).padStart(2, '0');
+  // Timestamp UTC no formato AliExpress
+  const timestamp = getAliExpressTimestamp();
   const params = {
     method,
     app_key: FINAL_APP_KEY,
@@ -107,14 +112,8 @@ const callAliExpress = async (method, extraParams={}) => {
 };
 
 export const searchProducts = async (keyword) => {
-  // Formato correto: YYYY-MM-DD HH:mm:ss (um espaço apenas)
-  const now = new Date();
-  const timestamp = now.getFullYear() + '-' + 
-                   String(now.getMonth() + 1).padStart(2, '0') + '-' + 
-                   String(now.getDate()).padStart(2, '0') + ' ' + 
-                   String(now.getHours()).padStart(2, '0') + ':' + 
-                   String(now.getMinutes()).padStart(2, '0') + ':' + 
-                   String(now.getSeconds()).padStart(2, '0');
+  // Timestamp UTC no formato AliExpress
+  const timestamp = getAliExpressTimestamp();
   
   const params = {
     method: "aliexpress.ds.text.search",
