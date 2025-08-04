@@ -101,19 +101,16 @@ const callAliExpress = async (method, extraParams={}) => {
   
   try {
     // URL-encode o timestamp apenas para a URL (não para assinatura)
-    const urlParams = new URLSearchParams({
+    const query = new URLSearchParams({
       ...params,
       timestamp: encodeURIComponent(params.timestamp),
       sign
-    });
+    }).toString();
     
-    const { data } = await axios.post(`${BASE_URL}`, 
-      urlParams, {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        }
-      }
-    );
+    const url = `${BASE_URL}?${query}`;
+    console.log('🔍 URL da requisição:', url);
+    
+    const { data } = await axios.get(url);
     console.log('✅ Resposta:', data);
     return data;
   } catch (error) {
@@ -150,19 +147,16 @@ export const searchProducts = async (keyword) => {
   
   try {
     // URL-encode o timestamp apenas para a URL (não para assinatura)
-    const urlParams = new URLSearchParams({
+    const query = new URLSearchParams({
       ...params,
       timestamp: encodeURIComponent(params.timestamp),
       sign
-    });
+    }).toString();
     
-    const { data } = await axios.post(`${BASE_URL}`, 
-      urlParams, {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        }
-      }
-    );
+    const url = `${BASE_URL}?${query}`;
+    console.log('🔍 URL da requisição:', url);
+    
+    const { data } = await axios.get(url);
     console.log('✅ Resposta produtos:', data);
     return data;
   } catch (error) {
