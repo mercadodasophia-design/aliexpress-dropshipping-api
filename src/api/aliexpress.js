@@ -21,28 +21,28 @@ const FINAL_REDIRECT_URI = REDIRECT_URI || DEFAULT_REDIRECT_URI;
 
 // Gera assinatura HMAC-SHA256 (padrão AliExpress Open Platform)
 const generateSign = (params) => {
-  // Converter todos os valores para string
-  const strParams = {};
-  for (const key in params) {
-    strParams[key] = params[key].toString();
-  }
+  // Converte valores para string e remove espaços extras (trim)
+  const cleanParams = {};
+  Object.keys(params).forEach(key => {
+    cleanParams[key] = params[key].toString().trim();
+  });
 
-  // Ordenar as chaves lexicograficamente
-  const orderedKeys = Object.keys(strParams).sort();
+  // Ordena lexicograficamente as chaves
+  const orderedKeys = Object.keys(cleanParams).sort();
 
-  // Concatenar chave + valor
+  // Concatena chave+valor sem separadores
   let baseString = '';
   for (const key of orderedKeys) {
-    baseString += key + strParams[key];
+    baseString += key + cleanParams[key];
   }
 
-  // Concatenar appSecret no final
+  // Adiciona appSecret no fim
   baseString += FINAL_APP_SECRET;
 
   console.log('🔍 String para assinatura:', baseString);
   console.log('🔍 Parâmetros ordenados:', orderedKeys);
 
-  // Gerar hash HMAC-SHA256
+  // Cria hash HMAC-SHA256 com appSecret como chave
   const hash = crypto.createHmac('sha256', FINAL_APP_SECRET)
                      .update(baseString)
                      .digest('hex')
