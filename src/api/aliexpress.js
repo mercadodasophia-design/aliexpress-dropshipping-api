@@ -100,12 +100,15 @@ const callAliExpress = async (method, extraParams={}) => {
   console.log('🔑 Assinatura:', sign);
   
   try {
-    // URL-encode o timestamp (espaço -> %20)
-    const encodedParams = { ...params };
-    encodedParams.timestamp = params.timestamp.replace(' ', '%20');
+    // URL-encode o timestamp apenas para a URL (não para assinatura)
+    const urlParams = new URLSearchParams({
+      ...params,
+      timestamp: encodeURIComponent(params.timestamp),
+      sign
+    });
     
     const { data } = await axios.post(`${BASE_URL}`, 
-      new URLSearchParams({ ...encodedParams, sign }), {
+      urlParams, {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded'
         }
@@ -146,12 +149,15 @@ export const searchProducts = async (keyword) => {
   console.log('🔑 Assinatura:', sign);
   
   try {
-    // URL-encode o timestamp (espaço -> %20)
-    const encodedParams = { ...params };
-    encodedParams.timestamp = params.timestamp.replace(' ', '%20');
+    // URL-encode o timestamp apenas para a URL (não para assinatura)
+    const urlParams = new URLSearchParams({
+      ...params,
+      timestamp: encodeURIComponent(params.timestamp),
+      sign
+    });
     
     const { data } = await axios.post(`${BASE_URL}`, 
-      new URLSearchParams({ ...encodedParams, sign }), {
+      urlParams, {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded'
         }
