@@ -5,7 +5,7 @@ import { saveTokens, loadTokens, refreshTokenIfNeeded } from "../utils/tokenMana
 
 dotenv.config({ path: '../../config.env' });
 
-const BASE_URL = "https://api-sg.aliexpress.com";
+const BASE_URL = "https://api-sg.aliexpress.com/sync";
 
 // Valores padrão para desenvolvimento
 const DEFAULT_APP_KEY = "517616";
@@ -32,10 +32,10 @@ const generateSign = (params) => {
   return crypto.createHmac("sha256", FINAL_APP_SECRET).update(signStr).digest("hex").toUpperCase();
 };
 
-export const getAuthUrl = () => `${BASE_URL}/oauth/authorize?response_type=code&client_id=${FINAL_APP_KEY}&redirect_uri=${encodeURIComponent(FINAL_REDIRECT_URI)}`;
+export const getAuthUrl = () => `https://api-sg.aliexpress.com/oauth/authorize?response_type=code&client_id=${FINAL_APP_KEY}&redirect_uri=${encodeURIComponent(FINAL_REDIRECT_URI)}`;
 
 export const handleCallback = async (code) => {
-  const { data } = await axios.post(`${BASE_URL}/oauth/token`, new URLSearchParams({
+  const { data } = await axios.post(`https://api-sg.aliexpress.com/oauth/token`, new URLSearchParams({
     grant_type: "authorization_code",
     client_id: FINAL_APP_KEY,
     client_secret: FINAL_APP_SECRET,
@@ -65,7 +65,7 @@ const callAliExpress = async (method, extraParams={}) => {
   console.log('🔑 Assinatura:', sign);
   
   try {
-    const { data } = await axios.post(`${BASE_URL}/router/rest`, 
+    const { data } = await axios.post(`${BASE_URL}`, 
       new URLSearchParams({ ...params, sign }), {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded'
@@ -91,11 +91,12 @@ export const searchProducts = async (keyword) => {
     format: "json",
     v: "1.0",
     keyWord: keyword,
-    local: "en_US",
+    local: "zh_CN",
     countryCode: "US",
     currency: "USD",
-    pageSize: 5,
-    pageIndex: 1
+    pageSize: 20,
+    pageIndex: 1,
+    sortBy: "min_price,asc"
   };
   
   const sign = generateSign(params);
@@ -105,7 +106,7 @@ export const searchProducts = async (keyword) => {
   console.log('🔑 Assinatura:', sign);
   
   try {
-    const { data } = await axios.post(`${BASE_URL}/router/rest`, 
+    const { data } = await axios.post(`${BASE_URL}`, 
       new URLSearchParams({ ...params, sign }), {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded'
