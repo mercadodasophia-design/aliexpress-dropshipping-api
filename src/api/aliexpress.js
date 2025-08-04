@@ -19,7 +19,7 @@ const FINAL_APP_KEY = APP_KEY || DEFAULT_APP_KEY;
 const FINAL_APP_SECRET = APP_SECRET || DEFAULT_APP_SECRET;
 const FINAL_REDIRECT_URI = REDIRECT_URI || DEFAULT_REDIRECT_URI;
 
-// Gera assinatura HMAC-SHA256
+// Gera assinatura MD5 (padrão AliExpress)
 const generateSign = (params) => {
   const sortedKeys = Object.keys(params).sort();
   let signStr = "";
@@ -29,7 +29,7 @@ const generateSign = (params) => {
     }
   });
   signStr += FINAL_APP_SECRET;
-  return crypto.createHmac("sha256", FINAL_APP_SECRET).update(signStr).digest("hex").toUpperCase();
+  return crypto.createHash("md5").update(signStr).digest("hex").toUpperCase();
 };
 
 export const getAuthUrl = () => `https://api-sg.aliexpress.com/oauth/authorize?response_type=code&client_id=${FINAL_APP_KEY}&redirect_uri=${encodeURIComponent(FINAL_REDIRECT_URI)}`;
@@ -53,7 +53,7 @@ const callAliExpress = async (method, extraParams={}) => {
     method,
     app_key: FINAL_APP_KEY,
     timestamp,
-    sign_method: "hmac-sha256",
+    sign_method: "md5",
     format: "json",
     v: "1.0",
     ...extraParams
@@ -87,7 +87,7 @@ export const searchProducts = async (keyword) => {
     method: "aliexpress.ds.text.search",
     app_key: FINAL_APP_KEY,
     timestamp,
-    sign_method: "hmac-sha256",
+    sign_method: "md5",
     format: "json",
     v: "1.0",
     keyWord: keyword,
