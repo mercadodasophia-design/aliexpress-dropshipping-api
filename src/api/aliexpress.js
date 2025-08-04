@@ -179,20 +179,17 @@ export const searchProducts = async (keyword) => {
   const timestamp = await getAliExpressTimestamp();
   
   const params = {
-    method: "aliexpress.ds.text.search",
+    method: "aliexpress.ds.product.get",
     app_key: FINAL_APP_KEY,
     timestamp,
     sign_method: "hmac-sha256",
     format: "json",
     v: "1.0",
-    keyWords: keyword, // Case-sensitive: keyWords (plural, com W maiúsculo)
+    productId: "1005005474567890", // ID de produto de exemplo
     local: "en_US", // Parâmetro obrigatório: local (sem "e")
     locale: "en_US", // Parâmetro adicional: locale (com "e")
     countryCode: "US", // Case-sensitive: countryCode
-    currency: "USD",
-    pageSize: 20,
-    pageIndex: 1,
-    sortBy: "min_price,asc"
+    currency: "USD"
   };
   
   // Business Interface: não adiciona API path na assinatura
@@ -266,6 +263,49 @@ export const testApiConnection = async () => {
     return data;
   } catch (error) {
     console.log('❌ Erro no teste:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// Função para buscar produtos por categoria
+export const searchProductsByCategory = async (categoryId = "3") => {
+  const timestamp = await getAliExpressTimestamp();
+  
+  const params = {
+    method: "aliexpress.ds.product.get",
+    app_key: FINAL_APP_KEY,
+    timestamp,
+    sign_method: "hmac-sha256",
+    format: "json",
+    v: "1.0",
+    categoryId: categoryId, // ID da categoria (3 = Apparel & Accessories)
+    local: "en_US",
+    locale: "en_US",
+    countryCode: "US",
+    currency: "USD"
+  };
+  
+  // Business Interface: não adiciona API path na assinatura
+  const sign = generateSign(params, false);
+  
+  console.log('🔍 Buscando produtos por categoria:', categoryId);
+  console.log('📊 Parâmetros:', params);
+  console.log('🔑 Assinatura:', sign);
+  
+  try {
+    const query = new URLSearchParams({
+      ...params,
+      sign
+    }).toString();
+    
+    const url = `${BUSINESS_BASE_URL}?${query}`;
+    console.log('🔍 URL da requisição:', url);
+    
+    const { data } = await axios.get(url);
+    console.log('✅ Resposta produtos por categoria:', data);
+    return data;
+  } catch (error) {
+    console.log('❌ Erro na busca por categoria:', error.response?.data || error.message);
     throw error;
   }
 };

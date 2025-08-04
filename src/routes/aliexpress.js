@@ -1,5 +1,5 @@
 import express from "express";
-import { getAuthUrl, handleCallback, searchProducts, createOrder, getTracking, testApiConnection } from "../api/aliexpress.js";
+import { getAuthUrl, handleCallback, searchProducts, createOrder, getTracking, testApiConnection, searchProductsByCategory } from "../api/aliexpress.js";
 
 const router = express.Router();
 
@@ -55,6 +55,16 @@ router.get("/tracking", async (req, res) => {
 router.get("/test", async (req, res) => {
   try {
     const result = await testApiConnection();
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get("/products/category", async (req, res) => {
+  try {
+    const categoryId = req.query.categoryId || "3"; // 3 = Apparel & Accessories
+    const result = await searchProductsByCategory(categoryId);
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
