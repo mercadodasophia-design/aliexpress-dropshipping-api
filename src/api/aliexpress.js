@@ -31,13 +31,26 @@ async function getAliExpressTimestamp() {
     }
     
     const serverDate = new Date(dateHeader);
-    const timestamp = Math.floor(serverDate.getTime() / 1000);
     
-    console.log('🔍 Timestamp sincronizado com AliExpress:', timestamp);
+    // Teste 1: Timestamp em milissegundos (13 dígitos)
+    const timestampMs = serverDate.getTime();
+    
+    // Teste 2: Timestamp UTC+8 (hora de Pequim)
+    const beijingTime = serverDate.getTime() + (8 * 3600 * 1000);
+    const timestampBeijing = Math.floor(beijingTime / 1000);
+    
+    // Teste 3: Timestamp UTC normal (10 dígitos) - padrão atual
+    const timestampUtc = Math.floor(serverDate.getTime() / 1000);
+    
+    console.log('🔍 Timestamps gerados:');
+    console.log('🔍 UTC (10 dígitos):', timestampUtc);
+    console.log('🔍 UTC+8 Beijing (10 dígitos):', timestampBeijing);
+    console.log('🔍 Milissegundos (13 dígitos):', timestampMs);
     console.log('🔍 Horário do servidor AliExpress:', serverDate.toString());
     console.log('🔍 Header Date recebido:', dateHeader);
     
-    return timestamp;
+    // Por enquanto, vamos testar com UTC+8 (Beijing)
+    return timestampBeijing;
   } catch (error) {
     console.log('⚠️ Erro ao sincronizar com AliExpress:', error.message);
     console.log('⚠️ Usando timestamp local como fallback');
@@ -58,7 +71,12 @@ const generateSign = (params) => {
   // Converte valores para string e remove espaços extras (trim)
   const cleanParams = {};
   Object.keys(params).forEach(key => {
-    cleanParams[key] = params[key].toString().trim();
+    // Garante que timestamp seja sempre string
+    if (key === 'timestamp') {
+      cleanParams[key] = String(params[key]);
+    } else {
+      cleanParams[key] = params[key].toString().trim();
+    }
   });
 
   // Ordena lexicograficamente as chaves
