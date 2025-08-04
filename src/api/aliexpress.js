@@ -21,9 +21,7 @@ const FINAL_REDIRECT_URI = REDIRECT_URI || DEFAULT_REDIRECT_URI;
 
 // Função para gerar timestamp UTC no formato AliExpress
 function getAliExpressTimestamp() {
-  // Adiciona 2 minutos para compensar possível dessincronização do relógio
   const now = new Date();
-  now.setUTCMinutes(now.getUTCMinutes() + 2);
   
   const timestamp = now.getUTCFullYear() + '-' +
     String(now.getUTCMonth() + 1).padStart(2, '0') + '-' +
