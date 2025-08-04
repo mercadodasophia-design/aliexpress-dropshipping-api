@@ -5,7 +5,9 @@ import { saveTokens, loadTokens, refreshTokenIfNeeded } from "../utils/tokenMana
 
 dotenv.config({ path: '../../config.env' });
 
-const BASE_URL = "https://api-sg.aliexpress.com/rest";
+// URLs diferentes para System Interfaces e Business Interfaces
+const SYSTEM_BASE_URL = "https://api-sg.aliexpress.com/rest";
+const BUSINESS_BASE_URL = "https://api-sg.aliexpress.com/sync";
 
 // Valores padrão para desenvolvimento
 const DEFAULT_APP_KEY = "517616";
@@ -66,8 +68,8 @@ async function getAliExpressTimestamp() {
   }
 }
 
-// Gera assinatura HMAC-SHA256 (padrão AliExpress Open Platform)
-const generateSign = (params) => {
+// Gera assinatura HMAC-SHA256 seguindo documentação oficial AliExpress
+const generateSign = (params, isSystemInterface = false, apiPath = '') => {
   // Converte valores para string e remove espaços extras (trim)
   const cleanParams = {};
   Object.keys(params).forEach(key => {
@@ -84,15 +86,19 @@ const generateSign = (params) => {
 
   // Concatena chave+valor sem separadores
   let baseString = '';
+  
+  // Para System Interfaces, adiciona o API path no início
+  if (isSystemInterface && apiPath) {
+    baseString += apiPath;
+  }
+  
   for (const key of orderedKeys) {
     baseString += key + cleanParams[key];
   }
 
-  // Adiciona appSecret no fim
-  baseString += FINAL_APP_SECRET;
-
   console.log('🔍 String para assinatura:', baseString);
   console.log('🔍 Parâmetros ordenados:', orderedKeys);
+  console.log('🔍 Tipo de interface:', isSystemInterface ? 'System' : 'Business');
 
   // Cria hash HMAC-SHA256 com appSecret como chave
   const hash = crypto.createHmac('sha256', FINAL_APP_SECRET)
@@ -140,7 +146,9 @@ const callAliExpress = async (method, extraParams={}) => {
     v: "1.0",
     ...extraParams
   };
-  const sign = generateSign(params);
+  
+  // Business Interface: não adiciona API path na assinatura
+  const sign = generateSign(params, false);
   
   console.log('🔍 Chamando API AliExpress:', method);
   console.log('📊 Parâmetros:', params);
@@ -153,7 +161,8 @@ const callAliExpress = async (method, extraParams={}) => {
       sign
     }).toString();
     
-    const url = `${BASE_URL}?${query}`;
+    // Business Interface: usa /sync endpoint
+    const url = `${BUSINESS_BASE_URL}?${query}`;
     console.log('🔍 URL da requisição:', url);
     
     const { data } = await axios.get(url);
@@ -185,7 +194,8 @@ export const searchProducts = async (keyword) => {
     sortBy: "min_price,asc"
   };
   
-  const sign = generateSign(params);
+  // Business Interface: não adiciona API path na assinatura
+  const sign = generateSign(params, false);
   
   console.log('🔍 Buscando produtos:', keyword);
   console.log('📊 Parâmetros:', params);
@@ -198,7 +208,8 @@ export const searchProducts = async (keyword) => {
       sign
     }).toString();
     
-    const url = `${BASE_URL}?${query}`;
+    // Business Interface: usa /sync endpoint
+    const url = `${BUSINESS_BASE_URL}?${query}`;
     console.log('🔍 URL da requisição:', url);
     
     const { data } = await axios.get(url);
