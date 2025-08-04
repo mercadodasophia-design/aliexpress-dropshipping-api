@@ -179,17 +179,20 @@ export const searchProducts = async (keyword) => {
   const timestamp = await getAliExpressTimestamp();
   
   const params = {
-    method: "aliexpress.ds.product.get", // Testando endpoint diferente
+    method: "aliexpress.ds.text.search",
     app_key: FINAL_APP_KEY,
     timestamp,
     sign_method: "hmac-sha256",
     format: "json",
     v: "1.0",
-    productId: "1005005474567890", // ID de produto de teste
+    keyWords: keyword, // Case-sensitive: keyWords (plural, com W maiúsculo)
     local: "en_US", // Parâmetro obrigatório: local (sem "e")
     locale: "en_US", // Parâmetro adicional: locale (com "e")
     countryCode: "US", // Case-sensitive: countryCode
-    currency: "USD"
+    currency: "USD",
+    pageSize: 20,
+    pageIndex: 1,
+    sortBy: "min_price,asc"
   };
   
   // Business Interface: não adiciona API path na assinatura
