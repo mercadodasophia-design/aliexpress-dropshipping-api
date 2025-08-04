@@ -112,15 +112,35 @@ const generateSign = (params, isSystemInterface = false, apiPath = '') => {
 export const getAuthUrl = () => `https://api-sg.aliexpress.com/oauth/authorize?response_type=code&client_id=${FINAL_APP_KEY}&redirect_uri=${encodeURIComponent(FINAL_REDIRECT_URI)}`;
 
 export const handleCallback = async (code) => {
-  const { data } = await axios.post(`https://api-sg.aliexpress.com/oauth/token`, new URLSearchParams({
-    grant_type: "authorization_code",
-    client_id: FINAL_APP_KEY,
-    client_secret: FINAL_APP_SECRET,
-    code,
-    redirect_uri: FINAL_REDIRECT_URI,
-  }));
-  saveTokens(data);
-  return data;
+  console.log('🔍 Processando callback OAuth com code:', code);
+  
+  try {
+    const response = await axios.post(`https://api-sg.aliexpress.com/oauth/token`, new URLSearchParams({
+      grant_type: "authorization_code",
+      client_id: FINAL_APP_KEY,
+      client_secret: FINAL_APP_SECRET,
+      code,
+      redirect_uri: FINAL_REDIRECT_URI,
+    }));
+    
+    console.log('✅ Resposta OAuth recebida:', {
+      status: response.status,
+      access_token: response.data.access_token ? '✅ Presente' : '❌ Ausente',
+      refresh_token: response.data.refresh_token ? '✅ Presente' : '❌ Ausente',
+      expires_in: response.data.expires_in || 'N/A',
+      token_type: response.data.token_type || 'N/A'
+    });
+    
+    saveTokens(response.data);
+    return response.data;
+  } catch (error) {
+    console.log('❌ Erro no callback OAuth:', {
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message
+    });
+    throw error;
+  }
 };
 
 // Função genérica para chamar métodos ds.*
@@ -271,6 +291,10 @@ export const testApiConnection = async () => {
 export const searchProductsByCategory = async (categoryId = "3") => {
   const timestamp = await getAliExpressTimestamp();
   
+  // Carregar tokens se disponível
+  const tokens = loadTokens();
+  const accessToken = tokens?.access_token;
+  
   const params = {
     method: "aliexpress.ds.product.get",
     app_key: FINAL_APP_KEY,
@@ -284,6 +308,14 @@ export const searchProductsByCategory = async (categoryId = "3") => {
     countryCode: "US",
     currency: "USD"
   };
+  
+  // Adicionar access_token se disponível
+  if (accessToken) {
+    params.access_token = accessToken;
+    console.log('🔑 Usando access_token:', accessToken.substring(0, 10) + '...');
+  } else {
+    console.log('⚠️ Nenhum access_token disponível');
+  }
   
   // Business Interface: não adiciona API path na assinatura
   const sign = generateSign(params, false);
