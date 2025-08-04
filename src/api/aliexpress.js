@@ -123,12 +123,20 @@ export const handleCallback = async (code) => {
       redirect_uri: FINAL_REDIRECT_URI,
     }));
     
-    console.log('✅ Resposta OAuth recebida:', {
+    console.log('✅ Resposta OAuth completa:', {
       status: response.status,
-      access_token: response.data.access_token ? '✅ Presente' : '❌ Ausente',
-      refresh_token: response.data.refresh_token ? '✅ Presente' : '❌ Ausente',
-      expires_in: response.data.expires_in || 'N/A',
-      token_type: response.data.token_type || 'N/A'
+      headers: response.headers,
+      data: response.data,
+      data_keys: Object.keys(response.data || {}),
+      data_type: typeof response.data
+    });
+    
+    console.log('✅ Resposta OAuth resumida:', {
+      status: response.status,
+      access_token: response.data?.access_token ? '✅ Presente' : '❌ Ausente',
+      refresh_token: response.data?.refresh_token ? '✅ Presente' : '❌ Ausente',
+      expires_in: response.data?.expires_in || 'N/A',
+      token_type: response.data?.token_type || 'N/A'
     });
     
     saveTokens(response.data);
@@ -137,7 +145,8 @@ export const handleCallback = async (code) => {
     console.log('❌ Erro no callback OAuth:', {
       status: error.response?.status,
       data: error.response?.data,
-      message: error.message
+      message: error.message,
+      full_error: error
     });
     throw error;
   }
