@@ -61,8 +61,19 @@ const callAliExpress = async (method, extraParams={}) => {
     ...extraParams
   };
   const sign = generateSign(params);
-  const { data } = await axios.get(`${BASE_URL}/router/rest`, { params: { ...params, sign } });
-  return data;
+  
+  console.log('🔍 Chamando API AliExpress:', method);
+  console.log('📊 Parâmetros:', params);
+  console.log('🔑 Assinatura:', sign);
+  
+  try {
+    const { data } = await axios.get(`${BASE_URL}/router/rest`, { params: { ...params, sign } });
+    console.log('✅ Resposta:', data);
+    return data;
+  } catch (error) {
+    console.log('❌ Erro na API:', error.response?.data || error.message);
+    throw error;
+  }
 };
 
 export const searchProducts = async (keyword) => {

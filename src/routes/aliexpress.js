@@ -5,6 +5,14 @@ const router = express.Router();
 
 router.get("/auth", (req, res) => res.json({ url: getAuthUrl() }));
 
+router.get("/config", (req, res) => {
+  res.json({
+    app_key: process.env.APP_KEY || "517616",
+    redirect_uri: process.env.REDIRECT_URI || "https://mercadodasophia-api.onrender.com/api/aliexpress/oauth-callback",
+    base_url: "https://api-sg.aliexpress.com"
+  });
+});
+
 router.get("/oauth-callback", async (req, res) => {
   const code = req.query.code;
   if (!code) return res.status(400).send("Código de autorização não encontrado");
