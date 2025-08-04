@@ -101,8 +101,8 @@ export const searchProducts = async (keyword) => {
     sign_method: "hmac-sha256",
     format: "json",
     v: "1.0",
-    keyWord: keyword, // Case-sensitive: keyWord (não keyword)
-    local: "en_US", // Case-sensitive: local (não locale)
+    keyWords: keyword, // Case-sensitive: keyWords (plural, com W maiúsculo)
+    locale: "en_US", // Case-sensitive: locale (não local)
     countryCode: "US", // Case-sensitive: countryCode
     currency: "USD",
     pageSize: 20,
