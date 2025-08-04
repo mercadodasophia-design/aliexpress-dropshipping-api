@@ -23,18 +23,22 @@ const FINAL_REDIRECT_URI = REDIRECT_URI || DEFAULT_REDIRECT_URI;
 function getAliExpressTimestamp() {
   const now = new Date();
   
-  const timestamp = now.getUTCFullYear() + '-' +
-    String(now.getUTCMonth() + 1).padStart(2, '0') + '-' +
-    String(now.getUTCDate()).padStart(2, '0') + ' ' +
-    String(now.getUTCHours()).padStart(2, '0') + ':' +
-    String(now.getUTCMinutes()).padStart(2, '0') + ':' +
-    String(now.getUTCSeconds()).padStart(2, '0');
+  // Corrige o timestamp subtraindo 3 horas (servidor está adiantado)
+  const correctedDate = new Date(now.getTime() - (3 * 60 * 60 * 1000));
+  
+  const timestamp = correctedDate.getUTCFullYear() + '-' +
+    String(correctedDate.getUTCMonth() + 1).padStart(2, '0') + '-' +
+    String(correctedDate.getUTCDate()).padStart(2, '0') + ' ' +
+    String(correctedDate.getUTCHours()).padStart(2, '0') + ':' +
+    String(correctedDate.getUTCMinutes()).padStart(2, '0') + ':' +
+    String(correctedDate.getUTCSeconds()).padStart(2, '0');
   
   console.log('🔍 Timestamp UTC gerado:', timestamp);
   console.log('🔍 Horário local:', now.toString());
   console.log('🔍 Horário UTC:', now.toISOString());
   console.log('🔍 Timezone:', Intl.DateTimeFormat().resolvedOptions().timeZone);
   console.log('🔍 Offset:', now.getTimezoneOffset(), 'minutos');
+  console.log('🔍 Correção aplicada: -3 horas');
   
   return timestamp;
 }
