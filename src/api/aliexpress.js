@@ -82,15 +82,19 @@ export const searchProducts = async (keyword) => {
   const timestamp = new Date().toISOString().slice(0,19).replace("T"," ");
   
   const params = {
-    method: "aliexpress.ds.product.search",
+    method: "aliexpress.ds.text.search",
     app_key: FINAL_APP_KEY,
     session: tokens.access_token,
     timestamp,
     sign_method: "md5",
     format: "json",
     v: "2.0",
-    keywords: keyword,
-    page_size: 5
+    keyword: keyword,
+    local: "en_US",
+    countryCode: "US",
+    currency: "USD",
+    pageSize: 5,
+    pageIndex: 1
   };
   
   const sign = generateSign(params);
