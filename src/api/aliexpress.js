@@ -19,19 +19,30 @@ const FINAL_APP_KEY = APP_KEY || DEFAULT_APP_KEY;
 const FINAL_APP_SECRET = APP_SECRET || DEFAULT_APP_SECRET;
 const FINAL_REDIRECT_URI = REDIRECT_URI || DEFAULT_REDIRECT_URI;
 
-// Função para gerar timestamp UTC no formato AliExpress
-function getAliExpressTimestamp() {
-  const now = new Date();
-  // Timestamp em Unix epoch (segundos desde 1970) - aceito pela API
-  const timestamp = Math.floor(now.getTime() / 1000);
-  
-  console.log('🔍 Timestamp UTC gerado:', timestamp);
-  console.log('🔍 Horário local:', now.toString());
-  console.log('🔍 Horário UTC:', now.toISOString());
-  console.log('🔍 Timezone:', Intl.DateTimeFormat().resolvedOptions().timeZone);
-  console.log('🔍 Offset:', now.getTimezoneOffset(), 'minutos');
-  
-  return timestamp;
+// Função para sincronizar timestamp com servidor da AliExpress
+async function getAliExpressTimestamp() {
+  try {
+    // Sincroniza com servidor da AliExpress
+    const response = await axios.head('https://api-sg.aliexpress.com');
+    const serverDate = new Date(response.headers['date']); // GMT
+    const timestamp = Math.floor(serverDate.getTime() / 1000);
+    
+    console.log('🔍 Timestamp sincronizado com AliExpress:', timestamp);
+    console.log('🔍 Horário do servidor AliExpress:', serverDate.toString());
+    console.log('🔍 Horário local:', new Date().toString());
+    
+    return timestamp;
+  } catch (error) {
+    console.log('⚠️ Erro ao sincronizar com AliExpress, usando timestamp local');
+    // Fallback para timestamp local
+    const now = new Date();
+    const timestamp = Math.floor(now.getTime() / 1000);
+    
+    console.log('🔍 Timestamp local gerado:', timestamp);
+    console.log('🔍 Horário local:', now.toString());
+    
+    return timestamp;
+  }
 }
 
 // Gera assinatura HMAC-SHA256 (padrão AliExpress Open Platform)
@@ -82,8 +93,8 @@ export const handleCallback = async (code) => {
 
 // Função genérica para chamar métodos ds.*
 const callAliExpress = async (method, extraParams={}) => {
-  // Timestamp UTC no formato AliExpress
-  const timestamp = getAliExpressTimestamp();
+  // Timestamp UTC sincronizado com AliExpress
+  const timestamp = await getAliExpressTimestamp();
   const params = {
     method,
     app_key: FINAL_APP_KEY,
@@ -119,8 +130,8 @@ const callAliExpress = async (method, extraParams={}) => {
 };
 
 export const searchProducts = async (keyword) => {
-  // Timestamp UTC no formato AliExpress
-  const timestamp = getAliExpressTimestamp();
+  // Timestamp UTC sincronizado com AliExpress
+  const timestamp = await getAliExpressTimestamp();
   
   const params = {
     method: "aliexpress.ds.text.search",
