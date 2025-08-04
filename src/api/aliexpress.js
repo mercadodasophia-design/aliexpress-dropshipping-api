@@ -128,8 +128,13 @@ export const handleCallback = async (code) => {
     // Implementação exata conforme documentação AliExpress
     console.log('🔍 Tentando endpoint OAuth:', "https://api-sg.aliexpress.com/oauth/token");
     
+    // ✅ Endpoint oficial da documentação AliExpress
+    const endpoint = "https://api-sg.aliexpress.com/auth/token/create";
+    
+    console.log('🔍 Usando endpoint oficial:', endpoint);
+    
     const response = await axios.post(
-      "https://api-sg.aliexpress.com/oauth/token",
+      endpoint,
       new URLSearchParams({
         grant_type: "authorization_code",
         client_id: FINAL_APP_KEY,

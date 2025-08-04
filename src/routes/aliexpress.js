@@ -137,10 +137,74 @@ router.get("/app/config", (req, res) => {
       success: true,
       app_key: FINAL_APP_KEY,
       redirect_uri: FINAL_REDIRECT_URI,
-      auth_url: getAuthUrl()
+      auth_url: getAuthUrl(),
+      debug_info: {
+        app_key_length: FINAL_APP_KEY.length,
+        app_secret_length: FINAL_APP_SECRET.length,
+        redirect_uri_length: FINAL_REDIRECT_URI.length,
+        is_https: FINAL_REDIRECT_URI.startsWith('https://'),
+        has_api_path: FINAL_REDIRECT_URI.includes('/api/aliexpress/oauth-callback')
+      }
     });
   } catch (error) {
     console.log('❌ Erro ao verificar configuração:', error.message);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Rota para testar diferentes endpoints OAuth
+router.get("/test/oauth-endpoints", async (req, res) => {
+  try {
+    const testCode = "test_code_123";
+    const endpoints = [
+      "https://api-sg.aliexpress.com/auth/token/create", // ✅ Endpoint oficial da documentação
+      "https://api-sg.aliexpress.com/oauth/token",
+      "https://api-sg.aliexpress.com/oauth/access_token", 
+      "https://api-sg.aliexpress.com/oauth2/token"
+    ];
+    
+    const results = [];
+    
+    for (const endpoint of endpoints) {
+      try {
+        const response = await axios.post(
+          endpoint,
+          new URLSearchParams({
+            grant_type: "authorization_code",
+            client_id: FINAL_APP_KEY,
+            client_secret: FINAL_APP_SECRET,
+            redirect_uri: FINAL_REDIRECT_URI,
+            code: testCode,
+          }),
+          { 
+            headers: { 
+              "Content-Type": "application/x-www-form-urlencoded"
+            } 
+          }
+        );
+        
+        results.push({
+          endpoint,
+          status: response.status,
+          content_type: response.headers['content-type'],
+          success: true
+        });
+      } catch (error) {
+        results.push({
+          endpoint,
+          status: error.response?.status || 'N/A',
+          content_type: error.response?.headers?.['content-type'] || 'N/A',
+          success: false,
+          error: error.message
+        });
+      }
+    }
+    
+    res.json({
+      success: true,
+      results
+    });
+  } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });
