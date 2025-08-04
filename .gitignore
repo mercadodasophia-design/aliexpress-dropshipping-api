@@ -1,0 +1,20 @@
+# Dependências
+node_modules/
+
+# Arquivos de ambiente
+.env
+config.env
+
+# Dados de tokens
+data/tokens.json
+
+# Logs
+*.log
+
+# Arquivos temporários
+*.tmp
+*.temp
+
+# Sistema operacional
+.DS_Store
+Thumbs.db 
