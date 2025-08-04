@@ -77,7 +77,38 @@ const callAliExpress = async (method, extraParams={}) => {
 };
 
 export const searchProducts = async (keyword) => {
-  return callAliExpress("aliexpress.ds.product.get", { keywords: keyword, page_size: 5 });
+  // Usar método alternativo que não requer APP_KEY específica
+  const tokens = await refreshTokenIfNeeded();
+  const timestamp = new Date().toISOString().slice(0,19).replace("T"," ");
+  
+  const params = {
+    method: "aliexpress.ds.product.search",
+    app_key: FINAL_APP_KEY,
+    session: tokens.access_token,
+    timestamp,
+    sign_method: "md5",
+    format: "json",
+    v: "2.0",
+    keywords: keyword,
+    page_size: 5
+  };
+  
+  const sign = generateSign(params);
+  
+  console.log('🔍 Buscando produtos:', keyword);
+  console.log('📊 Parâmetros:', params);
+  console.log('🔑 Assinatura:', sign);
+  
+  try {
+    const { data } = await axios.get(`${BASE_URL}/router/rest`, { 
+      params: { ...params, sign } 
+    });
+    console.log('✅ Resposta produtos:', data);
+    return data;
+  } catch (error) {
+    console.log('❌ Erro na busca:', error.response?.data || error.message);
+    throw error;
+  }
 };
 
 export const createOrder = async (orderData) => {
