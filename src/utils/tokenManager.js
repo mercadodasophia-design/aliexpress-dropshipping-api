@@ -14,6 +14,11 @@ const FINAL_APP_KEY = APP_KEY || DEFAULT_APP_KEY;
 const FINAL_APP_SECRET = APP_SECRET || DEFAULT_APP_SECRET;
 
 export const saveTokens = (tokens) => {
+  // Criar pasta data se não existir
+  const dataDir = './data';
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
   fs.writeFileSync(TOKEN_FILE, JSON.stringify({ ...tokens, updated_at: Date.now() }, null, 2));
 };
 
