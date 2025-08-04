@@ -19,17 +19,17 @@ const FINAL_APP_KEY = APP_KEY || DEFAULT_APP_KEY;
 const FINAL_APP_SECRET = APP_SECRET || DEFAULT_APP_SECRET;
 const FINAL_REDIRECT_URI = REDIRECT_URI || DEFAULT_REDIRECT_URI;
 
-// Gera assinatura MD5
+// Gera assinatura HMAC-SHA256
 const generateSign = (params) => {
   const sortedKeys = Object.keys(params).sort();
-  let signStr = APP_SECRET;
+  let signStr = "";
   sortedKeys.forEach(key => {
     if(params[key] !== undefined && params[key] !== null && params[key] !== ""){
       signStr += key + params[key];
     }
   });
-  signStr += APP_SECRET;
-  return crypto.createHash("md5").update(signStr).digest("hex").toUpperCase();
+  signStr += FINAL_APP_SECRET;
+  return crypto.createHmac("sha256", FINAL_APP_SECRET).update(signStr).digest("hex").toUpperCase();
 };
 
 export const getAuthUrl = () => `${BASE_URL}/oauth/authorize?response_type=code&client_id=${FINAL_APP_KEY}&redirect_uri=${encodeURIComponent(FINAL_REDIRECT_URI)}`;
@@ -48,16 +48,14 @@ export const handleCallback = async (code) => {
 
 // Função genérica para chamar métodos ds.*
 const callAliExpress = async (method, extraParams={}) => {
-  const tokens = await refreshTokenIfNeeded();
   const timestamp = new Date().toISOString().slice(0,19).replace("T"," ");
   const params = {
     method,
     app_key: FINAL_APP_KEY,
-    session: tokens.access_token,
     timestamp,
-    sign_method: "md5",
+    sign_method: "hmac-sha256",
     format: "json",
-    v: "2.0",
+    v: "1.0",
     ...extraParams
   };
   const sign = generateSign(params);
@@ -83,19 +81,16 @@ const callAliExpress = async (method, extraParams={}) => {
 };
 
 export const searchProducts = async (keyword) => {
-  // Usar método alternativo que não requer APP_KEY específica
-  const tokens = await refreshTokenIfNeeded();
   const timestamp = new Date().toISOString().slice(0,19).replace("T"," ");
   
   const params = {
     method: "aliexpress.ds.text.search",
     app_key: FINAL_APP_KEY,
-    session: tokens.access_token,
     timestamp,
-    sign_method: "md5",
+    sign_method: "hmac-sha256",
     format: "json",
     v: "1.0",
-    keyword: keyword,
+    keyWord: keyword,
     local: "en_US",
     countryCode: "US",
     currency: "USD",
