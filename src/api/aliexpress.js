@@ -21,15 +21,23 @@ const FINAL_REDIRECT_URI = REDIRECT_URI || DEFAULT_REDIRECT_URI;
 
 // Gera assinatura HMAC-SHA256 (padrão AliExpress Open Platform)
 const generateSign = (params) => {
+  // Ordena as chaves lexicograficamente (ordem ASCII)
   const sortedKeys = Object.keys(params).sort();
   let signStr = "";
+  
+  // Concatena chave+valor na ordem correta
   sortedKeys.forEach(key => {
     if(params[key] !== undefined && params[key] !== null && params[key] !== ""){
       signStr += key + params[key];
     }
   });
+  
+  // Adiciona o app_secret no final
   signStr += FINAL_APP_SECRET;
+  
   console.log('🔍 String para assinatura:', signStr);
+  console.log('🔍 Parâmetros ordenados:', sortedKeys);
+  
   return crypto.createHmac("sha256", FINAL_APP_SECRET).update(signStr).digest("hex").toUpperCase();
 };
 
@@ -49,6 +57,7 @@ export const handleCallback = async (code) => {
 
 // Função genérica para chamar métodos ds.*
 const callAliExpress = async (method, extraParams={}) => {
+  // Formato correto: YYYY-MM-DD HH:mm:ss (um espaço apenas)
   const timestamp = new Date().toISOString().slice(0,19).replace("T"," ");
   const params = {
     method,
@@ -82,6 +91,7 @@ const callAliExpress = async (method, extraParams={}) => {
 };
 
 export const searchProducts = async (keyword) => {
+  // Formato correto: YYYY-MM-DD HH:mm:ss (um espaço apenas)
   const timestamp = new Date().toISOString().slice(0,19).replace("T"," ");
   
   const params = {
@@ -91,9 +101,9 @@ export const searchProducts = async (keyword) => {
     sign_method: "hmac-sha256",
     format: "json",
     v: "1.0",
-    keyWord: keyword,
-    local: "en_US",
-    countryCode: "US",
+    keyWord: keyword, // Case-sensitive: keyWord (não keyword)
+    local: "en_US", // Case-sensitive: local (não locale)
+    countryCode: "US", // Case-sensitive: countryCode
     currency: "USD",
     pageSize: 20,
     pageIndex: 1,
