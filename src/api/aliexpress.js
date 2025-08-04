@@ -5,7 +5,7 @@ import { saveTokens, loadTokens, refreshTokenIfNeeded } from "../utils/tokenMana
 
 dotenv.config({ path: '../../config.env' });
 
-const BASE_URL = "https://api-sg.aliexpress.com/sync";
+const BASE_URL = "https://api-sg.aliexpress.com/rest";
 
 // Valores padrão para desenvolvimento
 const DEFAULT_APP_KEY = "517616";
