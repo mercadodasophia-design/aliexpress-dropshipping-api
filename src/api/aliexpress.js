@@ -68,7 +68,13 @@ export const handleCallback = async (code) => {
 // Função genérica para chamar métodos ds.*
 const callAliExpress = async (method, extraParams={}) => {
   // Formato correto: YYYY-MM-DD HH:mm:ss (um espaço apenas)
-  const timestamp = new Date().toISOString().slice(0,19).replace("T"," ");
+  const now = new Date();
+  const timestamp = now.getFullYear() + '-' + 
+                   String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                   String(now.getDate()).padStart(2, '0') + ' ' + 
+                   String(now.getHours()).padStart(2, '0') + ':' + 
+                   String(now.getMinutes()).padStart(2, '0') + ':' + 
+                   String(now.getSeconds()).padStart(2, '0');
   const params = {
     method,
     app_key: FINAL_APP_KEY,
@@ -102,7 +108,13 @@ const callAliExpress = async (method, extraParams={}) => {
 
 export const searchProducts = async (keyword) => {
   // Formato correto: YYYY-MM-DD HH:mm:ss (um espaço apenas)
-  const timestamp = new Date().toISOString().slice(0,19).replace("T"," ");
+  const now = new Date();
+  const timestamp = now.getFullYear() + '-' + 
+                   String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                   String(now.getDate()).padStart(2, '0') + ' ' + 
+                   String(now.getHours()).padStart(2, '0') + ':' + 
+                   String(now.getMinutes()).padStart(2, '0') + ':' + 
+                   String(now.getSeconds()).padStart(2, '0');
   
   const params = {
     method: "aliexpress.ds.text.search",
