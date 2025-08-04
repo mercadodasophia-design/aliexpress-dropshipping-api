@@ -13,18 +13,55 @@ const DEFAULT_APP_SECRET = "TTqNmTMs5Q0QiPbulDNenhXr2My18nN4";
 const FINAL_APP_KEY = APP_KEY || DEFAULT_APP_KEY;
 const FINAL_APP_SECRET = APP_SECRET || DEFAULT_APP_SECRET;
 
+// Cache em memória para tokens (Render não persiste arquivos)
+let tokenCache = null;
+
 export const saveTokens = (tokens) => {
-  // Criar pasta data se não existir
-  const dataDir = './data';
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
+  console.log('💾 Salvando tokens:', {
+    access_token: tokens.access_token ? '✅ Presente' : '❌ Ausente',
+    refresh_token: tokens.refresh_token ? '✅ Presente' : '❌ Ausente',
+    expires_in: tokens.expires_in || 'N/A',
+    token_type: tokens.token_type || 'N/A'
+  });
+  
+  // Salvar em memória (principal)
+  tokenCache = { ...tokens, updated_at: Date.now() };
+  
+  // Tentar salvar em arquivo (backup)
+  try {
+    const dataDir = './data';
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+    fs.writeFileSync(TOKEN_FILE, JSON.stringify(tokenCache, null, 2));
+    console.log('✅ Tokens salvos em arquivo');
+  } catch (error) {
+    console.log('⚠️ Erro ao salvar em arquivo:', error.message);
+    console.log('✅ Tokens salvos apenas em memória');
   }
-  fs.writeFileSync(TOKEN_FILE, JSON.stringify({ ...tokens, updated_at: Date.now() }, null, 2));
 };
 
 export const loadTokens = () => {
-  if (!fs.existsSync(TOKEN_FILE)) return null;
-  return JSON.parse(fs.readFileSync(TOKEN_FILE));
+  // Primeiro tentar carregar da memória
+  if (tokenCache) {
+    console.log('✅ Tokens carregados da memória');
+    return tokenCache;
+  }
+  
+  // Depois tentar carregar do arquivo
+  try {
+    if (fs.existsSync(TOKEN_FILE)) {
+      const tokens = JSON.parse(fs.readFileSync(TOKEN_FILE));
+      tokenCache = tokens;
+      console.log('✅ Tokens carregados do arquivo');
+      return tokens;
+    }
+  } catch (error) {
+    console.log('⚠️ Erro ao carregar do arquivo:', error.message);
+  }
+  
+  console.log('❌ Nenhum token encontrado');
+  return null;
 };
 
 export const refreshTokenIfNeeded = async () => {

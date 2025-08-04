@@ -1,5 +1,6 @@
 import express from "express";
 import { getAuthUrl, handleCallback, searchProducts, createOrder, getTracking, testApiConnection, searchProductsByCategory } from "../api/aliexpress.js";
+import { loadTokens } from "../utils/tokenManager.js";
 
 const router = express.Router();
 
@@ -68,6 +69,25 @@ router.get("/products/category", async (req, res) => {
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+router.get("/tokens/status", (req, res) => {
+  const tokens = loadTokens();
+  if (tokens) {
+    res.json({
+      status: "✅ Autorizado",
+      access_token: tokens.access_token ? "✅ Presente" : "❌ Ausente",
+      refresh_token: tokens.refresh_token ? "✅ Presente" : "❌ Ausente",
+      expires_in: tokens.expires_in || "N/A",
+      updated_at: new Date(tokens.updated_at).toLocaleString(),
+      expires_at: new Date(tokens.updated_at + (tokens.expires_in || 3600) * 1000).toLocaleString()
+    });
+  } else {
+    res.json({
+      status: "❌ Não autorizado",
+      message: "Faça login primeiro em /api/aliexpress/auth"
+    });
   }
 });
 
