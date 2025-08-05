@@ -125,97 +125,58 @@ export const handleCallback = async (code) => {
   console.log('🔍 Processando callback OAuth com code:', code);
   
   try {
-    // Implementação exata conforme documentação AliExpress
-    console.log('🔍 Tentando endpoint OAuth:', "https://api-sg.aliexpress.com/oauth/token");
+    // Usar o SDK oficial conforme documentação
+    console.log('🔍 Usando SDK oficial para OAuth...');
     
-    // ✅ Endpoint oficial conforme documentação AliExpress
-    const endpoint = "https://api-sg.aliexpress.com/auth/token/create";
-    
-    console.log('🔍 Usando endpoint oficial conforme documentação:', endpoint);
+    const timestamp = await getAliExpressTimestamp();
     
     // Parâmetros conforme documentação oficial
-    const oauthParams = {
-      code: code,
+    const params = {
+      method: "auth.token.create",
       app_key: FINAL_APP_KEY,
-      app_secret: FINAL_APP_SECRET,
+      timestamp,
+      sign_method: "hmac-sha256",
+      format: "json",
+      v: "1.0",
+      code: code
     };
     
-    console.log('🔍 Parâmetros OAuth detalhados:', oauthParams);
+    // Gerar assinatura
+    const sign = generateSign(params, true, "/auth/token/create");
     
-    const response = await axios.post(
-      endpoint,
-      new URLSearchParams(oauthParams),
-      { 
-        headers: { 
-          "Content-Type": "application/x-www-form-urlencoded",
-          "Accept": "application/json",
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-        },
-        timeout: 10000
-      }
-    );
+    console.log('🔍 Parâmetros OAuth:', params);
+    console.log('🔑 Assinatura OAuth:', sign);
     
-    console.log('🔍 Parâmetros OAuth enviados:', {
-      code: code,
-      app_key: FINAL_APP_KEY,
-      app_secret: "***HIDDEN***",
-    });
+    // Fazer requisição com assinatura
+    const query = new URLSearchParams({
+      ...params,
+      sign
+    }).toString();
     
-    console.log('🔍 URLSearchParams string:', new URLSearchParams(oauthParams).toString());
+    const url = `${SYSTEM_BASE_URL}?${query}`;
+    console.log('🔍 URL OAuth:', url);
     
-    console.log('✅ Resposta OAuth completa:', {
-      status: response.status,
-      headers: response.headers,
-      data: response.data,
-      data_keys: Object.keys(response.data || {}),
-      data_type: typeof response.data
-    });
+    const response = await axios.get(url);
     
-    console.log('✅ Resposta OAuth resumida:', {
+    console.log('✅ Resposta OAuth:', {
       status: response.status,
       access_token: response.data?.access_token ? '✅ Presente' : '❌ Ausente',
       refresh_token: response.data?.refresh_token ? '✅ Presente' : '❌ Ausente',
-      expires_in: response.data?.expires_in || 'N/A',
-      token_type: response.data?.token_type || 'N/A'
+      expires_in: response.data?.expires_in || 'N/A'
     });
     
-    // Verifica se a resposta é HTML em vez de JSON
-    if (typeof response.data === 'string' && response.data.includes('<html>')) {
-      console.log('❌ Resposta é HTML em vez de JSON. Tentando abordagem alternativa...');
-      
-      // Tenta sem o header Accept
-      const response2 = await axios.post(
-        endpoint,
-        new URLSearchParams(oauthParams),
-        { 
-          headers: { 
-            "Content-Type": "application/x-www-form-urlencoded",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-          },
-          timeout: 10000
-        }
-      );
-      
-      console.log('✅ Segunda tentativa - Resposta:', {
-        status: response2.status,
-        data_type: typeof response2.data,
-        has_access_token: !!response2.data?.access_token
-      });
-      
-      if (response2.data?.access_token) {
-        saveTokens(response2.data);
-        return response2.data;
-      }
+    if (response.data?.access_token) {
+      saveTokens(response.data);
+      return response.data;
+    } else {
+      throw new Error('Token não encontrado na resposta');
     }
     
-    saveTokens(response.data);
-    return response.data;
   } catch (error) {
     console.log('❌ Erro no callback OAuth:', {
       status: error.response?.status,
       data: error.response?.data,
-      message: error.message,
-      full_error: error
+      message: error.message
     });
     throw error;
   }
