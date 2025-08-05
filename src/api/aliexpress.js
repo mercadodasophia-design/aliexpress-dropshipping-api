@@ -277,19 +277,16 @@ export const searchProducts = async (keyword) => {
   const timestamp = await getAliExpressTimestamp();
   
   const params = {
-    method: "aliexpress.ds.product.search",
+    method: "aliexpress.ds.text.search",
     app_key: FINAL_APP_KEY,
     timestamp,
     sign_method: "hmac-sha256",
     format: "json",
     v: "1.0",
-    keywords: keyword,
+    keyWord: keyword,
     local: "pt_BR",
-    locale: "pt_BR",
     countryCode: "BR",
     currency: "BRL",
-    ship_to_country: "BR",
-    language: "pt_BR",
     pageSize: 20,
     pageIndex: 1
   };
