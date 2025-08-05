@@ -233,9 +233,59 @@ const callAliExpress = async (method, extraParams={}) => {
   }
 };
 
+// Função para mapear termos de busca para categorias
+const getCategoryForKeyword = (keyword) => {
+  const lowerKeyword = keyword.toLowerCase();
+  
+  // Mapeamento de termos para categorias
+  const categoryMap = {
+    'phone': '509',
+    'smartphone': '509', 
+    'celular': '509',
+    'mobile': '509',
+    'laptop': '14',
+    'notebook': '14',
+    'computer': '14',
+    'computador': '14',
+    'shoes': '15',
+    'sapatos': '15',
+    'tenis': '15',
+    'smart': '509', // Dispositivos inteligentes
+    'watch': '15',
+    'relogio': '15',
+    'clothes': '15',
+    'roupas': '15',
+    'dress': '15',
+    'vestido': '15',
+    'electronics': '509',
+    'eletronicos': '509',
+    'gadgets': '509',
+    'acessorios': '15'
+  };
+  
+  // Buscar por correspondência exata primeiro
+  if (categoryMap[lowerKeyword]) {
+    return categoryMap[lowerKeyword];
+  }
+  
+  // Buscar por correspondência parcial
+  for (const [term, category] of Object.entries(categoryMap)) {
+    if (lowerKeyword.includes(term) || term.includes(lowerKeyword)) {
+      return category;
+    }
+  }
+  
+  // Categoria padrão (eletrônicos)
+  return '509';
+};
+
 export const searchProducts = async (keyword) => {
   // Timestamp UTC sincronizado com AliExpress
   const timestamp = await getAliExpressTimestamp();
+  
+  // Mapear termo para categoria
+  const categoryId = getCategoryForKeyword(keyword);
+  console.log(`🔍 Mapeando termo "${keyword}" para categoria ${categoryId}`);
   
   const params = {
     method: "aliexpress.ds.product.search",
@@ -244,7 +294,7 @@ export const searchProducts = async (keyword) => {
     sign_method: "hmac-sha256",
     format: "json",
     v: "1.0",
-    keywords: keyword,
+    categoryId: categoryId,
     local: "pt_BR",
     countryCode: "BR",
     currency: "BRL",
