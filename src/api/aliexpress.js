@@ -238,13 +238,13 @@ export const searchProducts = async (keyword) => {
   const timestamp = await getAliExpressTimestamp();
   
   const params = {
-    method: "aliexpress.ds.text.search",
+    method: "aliexpress.ds.product.search",
     app_key: FINAL_APP_KEY,
     timestamp,
     sign_method: "hmac-sha256",
     format: "json",
     v: "1.0",
-    keyWord: keyword,
+    keywords: keyword,
     local: "pt_BR",
     countryCode: "BR",
     currency: "BRL",
@@ -280,8 +280,16 @@ export const searchProducts = async (keyword) => {
       
       // Log dos primeiros 3 produtos para debug
       for (let i = 0; i < Math.min(3, products.length); i++) {
-        console.log(`  Produto ${i+1}: ${products[i].itemId} - ${products[i].itemUrl}`);
+        const product = products[i];
+        console.log(`  Produto ${i+1}: ${product.itemId} - ${product.type || 'sem tipo'} - ${product.itemUrl}`);
+        
+        // Verificar se o produto tem título
+        if (product.title) {
+          console.log(`    Título: ${product.title}`);
+        }
       }
+    } else {
+      console.log('❌ Estrutura de resposta inesperada:', Object.keys(data?.data || {}));
     }
     
     return data;
