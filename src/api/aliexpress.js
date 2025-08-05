@@ -265,7 +265,7 @@ const callAliExpress = async (method, extraParams={}) => {
     
     const { data } = await axios.get(url);
     console.log('✅ Resposta:', data);
-    return data;
+  return data;
   } catch (error) {
     console.log('❌ Erro na API:', error.response?.data || error.message);
     throw error;
@@ -277,25 +277,29 @@ export const searchProducts = async (keyword) => {
   const timestamp = await getAliExpressTimestamp();
   
   const params = {
-    method: "aliexpress.ds.product.get",
+    method: "aliexpress.ds.product.search",
     app_key: FINAL_APP_KEY,
     timestamp,
     sign_method: "hmac-sha256",
     format: "json",
     v: "1.0",
-    productId: "1005005474567890", // ID de produto de exemplo
-    local: "en_US", // Parâmetro obrigatório: local (sem "e")
-    locale: "en_US", // Parâmetro adicional: locale (com "e")
-    countryCode: "US", // Case-sensitive: countryCode
-    currency: "USD"
+    keywords: keyword,
+    local: "pt_BR",
+    locale: "pt_BR",
+    countryCode: "BR",
+    currency: "BRL",
+    ship_to_country: "BR",
+    language: "pt_BR",
+    pageSize: 20,
+    pageIndex: 1
   };
   
   // Business Interface: não adiciona API path na assinatura
   const sign = generateSign(params, false);
   
-  console.log('🔍 Buscando produtos:', keyword);
-  console.log('📊 Parâmetros:', params);
-  console.log('🔑 Assinatura:', sign);
+  console.log('🔍 Buscando produtos com termo:', keyword);
+  console.log('📊 Parâmetros da busca:', params);
+  console.log('🔑 Assinatura gerada:', sign);
   
   try {
     // Deixa o URLSearchParams cuidar do encode automaticamente
@@ -310,6 +314,18 @@ export const searchProducts = async (keyword) => {
     
     const { data } = await axios.get(url);
     console.log('✅ Resposta produtos:', data);
+    
+    // Debug: verificar se os produtos estão relacionados ao termo de busca
+    if (data?.data?.aliexpress_ds_text_search_response?.data?.products?.selection_search_product) {
+      const products = data.data.aliexpress_ds_text_search_response.data.products.selection_search_product;
+      console.log(`📦 Encontrados ${products.length} produtos para o termo "${keyword}"`);
+      
+      // Log dos primeiros 3 produtos para debug
+      for (let i = 0; i < Math.min(3, products.length); i++) {
+        console.log(`  Produto ${i+1}: ${products[i].itemId} - ${products[i].itemUrl}`);
+      }
+    }
+    
     return data;
   } catch (error) {
     console.log('❌ Erro na busca:', error.response?.data || error.message);
